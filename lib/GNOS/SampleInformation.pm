@@ -22,6 +22,20 @@ sub new {
     return $self;
 }
 
+sub filter_by_blacklist {
+    my $self =  shift;
+    my $filter = shift;
+    $self->{_filter_by_blacklist} = 1 if $filter;
+    return $self->{_filter_by_blacklist};
+}
+
+sub filter_by_whitelist{
+    my $self =  shift;
+    my $filter = shift;
+    $self->{_filter_by_whitelist} = 1 if $filter;
+    return $self->{_filter_by_whitelist};
+}
+
 sub get {
     my ($self, $working_dir, $gnos_url, $use_cached_xml, $whitelist, $blacklist) = @_;
 
@@ -84,19 +98,21 @@ sub get {
             next;
         }
 
-	if (@donor_whitelist) {
+	# If requested, only download XML for whitelisted samples/donors
+	# or block download of XML for blacklisted samples/donors
+	if (@donor_whitelist && $self->filter_by_whitelist()) {
             next unless grep {$participant_id eq $_} @donor_whitelist;
 	    say STDERR "Donor $participant_id is whitelisted";
         }
-	if (@donor_blacklist) {
+	if (@donor_blacklist && $self->filter_by_blacklist()) {
             say STDERR "Donor $participant_id is blacklisted"
                 and next if grep {$analysis_id eq $_} @sample_blacklist;
         }
-        if (@sample_whitelist) {
+        if (@sample_whitelist && $self->filter_by_whitelist()) {
             next unless grep {$analysis_id eq $_} @sample_whitelist;
 	    say STDERR "Analysis $analysis_id is whitelisted";
         }
-	if (@sample_blacklist) {
+	if (@sample_blacklist && $self->filter_by_blacklist()) {
             say STDERR "Analysis $analysis_id is blacklisted" 
 		and next if grep {$analysis_id eq $_} @sample_blacklist;
         }
@@ -362,7 +378,6 @@ sub download_analysis {
     }
 
     chomp(my $xml = `basename $out`);
-    say STDERR "downloading $xml...";
 
     my $response = system("wget -q -O $out $url");
     if ($response != 0) {

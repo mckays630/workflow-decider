@@ -68,12 +68,13 @@ sub get {
         if ($decider_config{'scheduling.ignore-failed'} eq 'true');
     
     $ARGV{'--schedule-whitelist-sample'} //= $decider_config{'scheduling.whitelist-sample'};
-    
     $ARGV{'--schedule-blacklist-sample'} //= $decider_config{'scheduling.blacklist-sample'};
-    
+    $ARGV{'--filter-downloads-by-whitelist'} = 1 
+	if $decider_config{'scheduling.filter-downloads-by-whitelist'} eq 'true'; 
     $ARGV{'--schedule-whitelist-donor'} //= $decider_config{'scheduling.whitelist-donor'};
-    
     $ARGV{'--schedule-blacklist-donor'} //= $decider_config{'scheduling.blacklist-donor'};
+    $ARGV{'--filter-downloads-by-blacklist'} = 1
+        if $decider_config{'scheduling.filter-downloads-by-blacklist'} eq 'true';
 
     $ARGV{'--schedule-ignore-lane-count'} = 1 
         if ($decider_config{'scheduling.ignore-lane-count'} eq 'true');

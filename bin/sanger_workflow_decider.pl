@@ -49,6 +49,12 @@ my ($cluster_information, $running_sample_ids, $failed_samples, $completed_sampl
 
 say 'Reading in GNOS Sample Information';
 my $gnos_info = GNOS::SampleInformation->new();
+if ($ARGV{'--filter-downloads-by-whitelist'}) {
+    $gnos_info->filter_by_whitelist(1);
+}
+if ($ARGV{'--filter-downloads-by-blacklist'}) {
+    $gnos_info->filter_by_blacklist(1);
+}
 my $sample_information = $gnos_info->get( $ARGV{'--working-dir'},
 					  $ARGV{'--gnos-url'},
 					  $ARGV{'--use-cached-xml'},
