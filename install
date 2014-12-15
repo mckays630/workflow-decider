@@ -16,6 +16,7 @@ libgetopt-euclid-perl libfile-slurp-perl libxml-dom-perl libconfig-simple-perl l
 libcapture-tiny-perl libcarp-always-perl libjson-perl libxml-libxml-perl libxml-libxml-simple-perl \
 libdb4.8 libberkeleydb-perl libtemplate-perl
 
+
 # Install GeneTorrent
 wget --no-clobber http://cghub.ucsc.edu/software/downloads/GeneTorrent/3.8.5/genetorrent-common_3.8.5-ubuntu2.91-12.04_amd64.deb -P /tmp
 wget --no-clobber http://cghub.ucsc.edu/software/downloads/GeneTorrent/3.8.5/genetorrent-download_3.8.5-ubuntu2.91-12.04_amd64.deb -P /tmp
@@ -29,3 +30,5 @@ sudo chmod a+x /usr/local/bin/seqware
 
 # Install Java
 sudo apt-get -y -q --force-yes install openjdk-7-jdk
+
+## By hand no apt-get package: sudo cpan; install Search::Elasticsearch

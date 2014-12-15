@@ -21,6 +21,9 @@ sub get {
     
     my %decider_config = $cfg->vars();
 
+    $ARGV{'--elastic-search-url'} 
+                   = $decider_config{'global_gnos.elastic-search-url'};
+
     my @general_seqware_clusters = split ';', $decider_config{'general.seqware-clusters'};
     $ARGV{'--seqware-clusters'} //= \@general_seqware_clusters;
 
@@ -96,11 +99,11 @@ sub get {
         if ($decider_config{'workflow.skip-gtupload'} eq 'true');
     
     
-    $ARGV{'--workflow-output-dir'} //= $decider_config {'workflow.output-dir'};
+    $ARGV{'--workflow-output-dir'} //= $decider_config{'workflow.output-dir'};
     
-    $ARGV{'--workflow-output-prefix'} //= $decider_config {'workflow.output-prefix'};
+    $ARGV{'--workflow-output-prefix'} //= $decider_config{'workflow.output-prefix'};
     
-    $ARGV{'--workflow-input-prefix'} //= $decider_config {'workflow.input-prefix'};
+    $ARGV{'--workflow-input-prefix'} //= $decider_config{'workflow.input-prefix'};
 
     $ARGV{'--cores-addressable'} //= $decider_config{'workflow.cores-addressable'};
 
