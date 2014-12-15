@@ -230,9 +230,9 @@ sub get {
         my $donor_id =  $participant_id || $submitter_donor_id;
 
 	# make sure the donor ID is unique for white/blacklist purposes;
-	my $unique_donor_id = join(/\t/,$dcc_project_code,$donor_id);
+	my $donor_id = join('-',$dcc_project_code,$donor_id);
         
-        say $parse_log "\tDONOR:\t$unique_donor_id";
+        say $parse_log "\tDONOR:\t$donor_id";
         say $parse_log "\tANALYSIS:\t$analysis_data_uri";
         say $parse_log "\tANALYSIS ID:\t$analysis_id";
         say $parse_log "\tPARTICIPANT ID:\t$participant_id";
@@ -248,6 +248,15 @@ sub get {
 	# We don't need to save the analysis for variant calls, just
 	# to record that it has been run.
 	if ($vc_workflow_name && $vc_workflow_version) {
+	    # just record the newer one if an earlier vertsion exists
+	    if ( my $version = $variant_workflow->{$donor_id}->{$vc_workflow_name} ) {
+		my @version1 = split '.', $version;
+		my @version2 = split ',', $vc_workflow_version;
+		next if $version1[0] >= $version2[0];
+		next if $version1[1] >= $version2[1];
+		next if $version1[2] >= $version2[2];
+	    }
+
 	    $variant_workflow->{$donor_id}->{$vc_workflow_name} = $vc_workflow_version;
 	    next;
 	}
@@ -329,7 +338,7 @@ sub get {
         }
 
 	# Save VC workflow data without mangling
-	$participants->{$center_name}{$donor_id}->{variant_workflow} = $variant_workflow;
+	$participants->{$center_name}->{$donor_id}->{variant_workflow} = $variant_workflow;
 
 
     }
@@ -373,6 +382,8 @@ sub download_analysis {
     if (-e $out and eval {$xs->XMLin($out)} and $use_cached_xml) {
 	return 1;
     }
+
+    say STDERR "Downloading $out...";
 
     chomp(my $xml = `basename $out`);
 
