@@ -51,6 +51,10 @@ file in the conf folder.
         file.type: readable
         repeatable 
 
+=item --workflow-name[=][ ]<workflow_name>
+
+Specify the variant caller workflow name to be run (eq SangerPancancerCgpCnIndelSnvStr)
+
 =item --workflow-version[=][ ]<workflow_version>
 
 Specify the variant caller workflow version you would like to run (eg. 1.0.1)

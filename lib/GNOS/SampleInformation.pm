@@ -60,12 +60,18 @@ sub get {
 
     my @donor_whitelist;
     if ($whitelist) {
-	@donor_whitelist = grep {s/^\S+\s+//} @{$whitelist->{donor}};
+	@donor_whitelist = @{$whitelist->{donor}};
+	for (@donor_whitelist) {
+	    s/^\S+\s+//;
+	}
 	say STDERR "Downloading only donor whitelist analysis results" if @donor_whitelist > 0;
     }
     my @donor_blacklist;
     if ($blacklist) {
-	@donor_blacklist = grep{s/^\S+\s+//} @{$blacklist->{donor}};
+	@donor_blacklist = @{$blacklist->{donor}};
+	for (@donor_blacklist) {
+	    s/^\S+\s+//;
+	}
 	say STDERR "Downloading only donor blacklist analysis results" if @donor_blacklist > 0;
     }
     my @sample_whitelist;
@@ -106,7 +112,7 @@ sub get {
         }
 	if (@donor_blacklist && $self->filter_by_blacklist()) {
             say STDERR "Donor $participant_id is blacklisted"
-                and next if grep {$analysis_id eq $_} @sample_blacklist;
+                and next if grep {$participant_id eq $_} @sample_blacklist;
         }
         if (@sample_whitelist && $self->filter_by_whitelist()) {
             next unless grep {$analysis_id eq $_} @sample_whitelist;
@@ -116,7 +122,6 @@ sub get {
             say STDERR "Analysis $analysis_id is blacklisted" 
 		and next if grep {$analysis_id eq $_} @sample_blacklist;
         }
-
 
         say $parse_log "\n\nANALYSIS\n";
         say $parse_log "\tANALYSIS FULL URL: $analysis_full_url $analysis_id";
@@ -214,18 +219,6 @@ sub get {
 	    $vc_workflow_name    = $attributes{variant_workflow_name};
 	    $vc_workflow_version = $attributes{variant_workflow_version};
 
-#	    say "\t\t\t\t\t\tTHIS is a VC record $dcc_project_code $submitter_donor_id $participant_id" if $vc_workflow_name;
-
-
-#        <ANALYSIS_ATTRIBUTE>
-#          <TAG>variant_workflow_name</TAG>
-#          <VALUE>Workflow_Bundle_Test_Cancer_Variant_Analysis</VALUE>
-#        </ANALYSIS_ATTRIBUTE>
-#        <ANALYSIS_ATTRIBUTE>
-#          <TAG>variant_workflow_version</TAG>
-#          <VALUE>1.0.0</VALUE>
-
-
 	    # XML inconsistent across sites?
 	    $use_control ||= $attributes{use_cntl};
         }
@@ -234,7 +227,7 @@ sub get {
 	$workflow_version = $vc_workflow_version || $bwa_workflow_version;
 
 
-        my $donor_id =  $submitter_donor_id || $participant_id;
+        my $donor_id =  $participant_id || $submitter_donor_id;
 
 	# make sure the donor ID is unique for white/blacklist purposes;
 	my $unique_donor_id = join(/\t/,$dcc_project_code,$donor_id);
@@ -315,8 +308,7 @@ sub get {
 	    submitter_sample_id      => $submitter_sample_id,
 	    submitter_aliquot_id     => $submitter_aliquot_id,
 	    sample_uuid              => $sample_uuid,
-	    bwa_workflow_version     => $bwa_workflow_version,
-	    variant_workflow         => $variant_workflow
+	    bwa_workflow_version     => $bwa_workflow_version
 	};
 
         $center_name = 'seqware';
@@ -335,6 +327,11 @@ sub get {
             my $file_info = $files->{$file_name};
             $participants->{$center_name}{$donor_id}{$sample_id}{$alignment}{$aliquot_id}{$library_name}{files}{$file_name} = $file_info;
         }
+
+	# Save VC workflow data without mangling
+	$participants->{$center_name}{$donor_id}->{variant_workflow} = $variant_workflow;
+
+
     }
     close $parse_log;
 

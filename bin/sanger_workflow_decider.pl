@@ -64,39 +64,36 @@ my $sample_information = $gnos_info->get( $ARGV{'--working-dir'},
 
 say 'Scheduling Samples';
 my $scheduler = SeqWare::Schedule::Sanger->new();
-$scheduler->schedule_samples( $report_file,
-			      $sample_information,
-			      $cluster_information,
-			      $running_sample_ids,
-			      $ARGV{'--workflow-skip-scheduling'},
-			      $ARGV{'--schedule-sample'}, 
-			      $ARGV{'--schedule-center'},
-			      $ARGV{'--schedule-donor'},
-			      $ARGV{'--schdeule-ignore-lane-count'},
-			      $ARGV{'--seqware-settings'},
-			      $ARGV{'--workflow-output-dir'},
-			      $ARGV{'--workflow-output-prefix'},
-			      $ARGV{'--schedule-force-run'},
-			      $ARGV{'--cores-addressable'},
-			      $ARGV{'--workflow-skip-gtdownload'}, 
-			      $ARGV{'--workflow-skip-gtupload'},
-			      $ARGV{'--workflow-upload-results'}, 
-			      $ARGV{'--workflow-input-prefix'},
-			      $ARGV{'--gnos-url'},
-			      $ARGV{'--schedule-ignore-failed'},
-			      $ARGV{'--working-dir'},
-			      $ARGV{'--workflow-version'},
-			      $ARGV{'--bwa-workflow-version'},
-			      $ARGV{'--tabix-url'},
-			      $ARGV{'--pem-file'},
-			      $whitelist,
-			      $blacklist
-    );
+my %args = %ARGV;
+strip_keys(%args);
+$args{report_file}         = $report_file;
+$args{sample_information}  = $sample_information;
+$args{cluster_information} = $cluster_information;
+$args{running_sample_ids}  = $running_sample_ids;
+$args{whitelist}           = $whitelist;
+$args{blacklist}           = $blacklist;
+
+$scheduler->schedule_samples(%args);
+
 close $report_file;
 
 say 'Finished!!';
 
 # Grab contents of white/black list file
+
+sub strip_keys {
+    my %hash = @_;
+    my @keys = keys %hash;
+    for my $key (@keys) {
+	my $val = $hash{$key};
+	delete $hash{$key};
+	$key =~ s/^--//;
+	$hash{$key} = $val;
+    }
+    return %hash;
+}
+
+
 sub get_list {
     my $path  = shift or return;
     my $color = shift;

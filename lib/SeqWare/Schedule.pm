@@ -22,37 +22,36 @@ sub new {
 
 sub schedule_samples {
     my $self = shift;
+    my %args = @_;
 
-    # Passing arguments in an ordered list is not sane.  TODO: convert to hashref
-
-    my ($report_file,
-	$sample_information, 
-	$cluster_information, 
-	$running_samples, 
-	$skip_scheduling,
-	$specific_sample,
-	$specific_donor,
-	$specific_center,
-	$ignore_lane_count,
-	$seqware_settings_file,
-	$output_dir,
-	$output_prefix,
-	$force_run,
-	$threads,
-	$skip_gtdownload,
-	$skip_gtupload,
-	$upload_results,
-	$input_prefix, 
-	$gnos_url,
-	$ignore_failed, 
-	$working_dir,
-	$run_workflow_version,
-	$bwa_workflow_version,
-	$tabix_url,
-	$pem_file,
-	$whitelist,
-	$blacklist,
-	) = @_;
+    my $report_file             = $args{'report_file'};
+    my $sample_information      = $args{'sample_information'};
+    my $cluster_information     = $args{'cluster_information'};
+    my $running_samples         = $args{'running_sampler_ids'}; 
+    my $skip_scheduling         = $args{'workflow-skip-scheduling'};
+    my $specific_sample         = $args{'schedule-sample'};
+    my $specific_donor          = $args{'schedule-center'};
+    my $specific_center         = $args{'schedule-donor'};
+    my $ignore_lane_count       = $args{'schdeule-ignore-lane-count'};
+    my $seqware_settings_file   = $args{'seqware-settings'};
+    my $output_dir              = $args{'workflow-output-dir'};
+    my $output_prefix           = $args{'workflow-output-prefix'};
+    my $force_run               = $args{'schedule-force-run'};
+    my $threads                 = $args{'cores-addressable'};
+    my $skip_gtdownload         = $args{'workflow-skip-gtdownload'};
+    my $skip_gtupload           = $args{'workflow-skip-gtdownload'};
+    my $upload_results          = $args{'workflow-upload-results'};
+    my $input_prefix            = $args{'workflow-input-prefix'};  
+    my $gnos_url                = $args{'gnos-url'};
+    my $ignore_failed           = $args{'schedule-ignore-failed'}; 
+    my $working_dir             = $args{'working-dir'};
+    my $workflow_version        = $args{'workflow-version'};
+    my $workflow_name           = $args{'workflow-name'};
+    my $bwa_workflow_version    = $args{'bwa-workflow-version'};
+    my $tabix_url               = $args{'tabix-url'};
+    my $pem_file                = $args{'pem-file'};
+    my $whitelist               = $args{'whitelist'};
+    my $blacklist               = $args{'blacklist'};
 
     say $report_file "SAMPLE SCHEDULING INFORMATION\n";
 
@@ -79,7 +78,6 @@ sub schedule_samples {
 		
 		my $donor_information = $sample_information->{$center_name}{$donor_id};
 
-		# TODO: this should be a hashref
 		$self->schedule_donor($report_file,
 				      $donor_id, 
 				      $donor_information,
