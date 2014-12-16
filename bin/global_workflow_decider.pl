@@ -30,11 +30,11 @@ use Data::Dumper;
 # add information from config file into %ARGV parameters.
 my %ARGV = %{Decider::Config->get(\%ARGV)};
 
-if ($ARGV{'--elastic-search-url'}) {
+unless ($ARGV{'--use-local-gnos'}) {
+    my $GS = GlobalGNOS::Search->new($ARGV{'--elastic-search-url'});
+    my $result = $GS->find_aligned_bams();
 
-    my $result = GlobalGNOS::Search->get_donor_aligned($ARGV{'--elastic-search-url'});
-
-    print Dumper $result;
+    print Dumper keys %{$result};
 
 }
 #open my $report_file, '>', "$Bin/../".$ARGV{'--report'};

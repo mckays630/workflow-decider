@@ -50,6 +50,9 @@ sub get {
     $ARGV{'--use-cached-analysis'} = 1 
         if ($decider_config{'general.use-cached-analysis'} eq 'true');
     
+    $ARGV{'--use-local-gnos'} = 1 
+        if ($decider_config{'general.gnos-query-local'} eq 'true');
+    
     $ARGV{'--seqware-settings'} //= $decider_config{'general.seqware-settings'};
         die 'Seqware settings needs to be defined' unless $ARGV{'--seqware-settings'};
     
