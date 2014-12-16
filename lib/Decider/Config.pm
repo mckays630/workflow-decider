@@ -44,6 +44,8 @@ sub get {
     $ARGV{'--gnos-url'} //= $decider_config{'general.gnos-url'};
     die 'GNOS url needs to be defined' unless $ARGV{'--gnos-url'};
     
+    $ARGV{'--gnos-upload-url'} //= $decider_config{'general.gnos-upload-url'};
+
     $ARGV{'--working-dir'} //= $decider_config{'general.working-dir'};
     die 'Working dir needs to be defined' unless $ARGV{'--working-dir'};
     

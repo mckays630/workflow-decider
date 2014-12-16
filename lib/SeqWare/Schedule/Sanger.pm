@@ -106,8 +106,15 @@ sub create_workflow_ini {
     $data->{'controlBam'}        = join(':',@normal_bam);
     $data->{'pemFile'}           = $pem_file;
     $data->{'gnosServer'}        = $gnos_url;
+    $data->{'uploadServer'}      = $self->{gnos_upload_url} if $self->{gnos_upload_url};
     $data->{'donor_id'}          = $donor->{donor_id};    
     
+    #if ($self->{gnos_upload_url}) {
+	#say STDERR "DEBUG: different GNOS servers for upload and download:\n",
+	#"$gnos_url " . $self->{gnos_upload_url};
+    #}
+    
+
     my $template = "$Bin/../conf/ini/workflow-$workflow_version.ini";
 
     my $ini_factory = $self->factory;

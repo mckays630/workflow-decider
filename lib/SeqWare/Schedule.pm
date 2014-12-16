@@ -46,6 +46,7 @@ sub schedule_samples {
     my $upload_results          = $args{'workflow-upload-results'};
     my $input_prefix            = $args{'workflow-input-prefix'};  
     my $gnos_url                = $args{'gnos-url'};
+    my $gnos_upload_url         = $args{'gnos-upload-url'};
     my $ignore_failed           = $args{'schedule-ignore-failed'}; 
     my $working_dir             = $args{'working-dir'};
     my $workflow_version        = $args{'workflow-version'};
@@ -55,6 +56,14 @@ sub schedule_samples {
     my $pem_file                = $args{'pem-file'};
     my $whitelist               = $args{'whitelist'};
     my $blacklist               = $args{'blacklist'};
+
+
+    # This is a special case: make a note of the GNOS upload URL is defined and 
+    # is not the same as the download URL
+    if ($gnos_upload_url && $gnos_upload_url ne $gnos_url) {
+	#say STDERR "DEBUG: detected different upload URL";
+	$self->{gnos_upload_url} = $gnos_upload_url;
+    }
 
     say $report_file "SAMPLE SCHEDULING INFORMATION\n";
 
@@ -171,7 +180,7 @@ sub schedule_workflow {
 
     my $donor_id = $donor->{donor_id};
 
-    if ($cluster_found or $skip_scheduling) {
+    if (1 || $cluster_found or $skip_scheduling) {
         system("mkdir -p $Bin/../$working_dir/ini");
 
         $self->create_workflow_settings(
@@ -197,7 +206,8 @@ sub schedule_workflow {
 	    $working_dir,
 	    $center_name,
 	    $tabix_url,
-	    $pem_file
+	    $pem_file,
+	    $self->{gnos_upload_url}
 	    );
     }
 
