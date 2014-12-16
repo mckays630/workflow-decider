@@ -180,7 +180,7 @@ sub schedule_workflow {
 
     my $donor_id = $donor->{donor_id};
 
-    if (1 || $cluster_found or $skip_scheduling) {
+    if ($cluster_found or $skip_scheduling) {
         system("mkdir -p $Bin/../$working_dir/ini");
 
         $self->create_workflow_settings(
