@@ -84,12 +84,13 @@ sub get {
     
     $ARGV{'--schedule-force-run'} = 1 
         if ($decider_config{'scheduling.force-run'} eq 'true');
+
     
     ### Workflow
 
     $ARGV{'--workflow-skip-scheduling'} = 1
         if ($decider_config{'workflow.skip-scheduling'} eq 'true');
-    
+
     $ARGV{'--workflow-upload-results'} = 1 
         if ($decider_config{'workflow.upload-results'} eq 'true');
     
@@ -111,4 +112,4 @@ sub get {
     return \%ARGV;
 }
 
-1
+1;

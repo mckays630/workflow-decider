@@ -158,7 +158,6 @@ sub schedule_workflow {
 	 $pem_file
 	) = @_;
 
-
     my $cluster = (keys %{$cluster_information})[0];
     my $cluster_found = (defined($cluster) and $cluster ne '' )? 1: 0;
 
@@ -202,60 +201,70 @@ sub schedule_workflow {
 	    );
     }
 
-#    $self->submit_workflow(
-#	$working_dir,
-#	$workflow_accession,
-#	$host,
-#	$skip_scheduling,
-#	$cluster_found,
-#	$report_file,
-#	$url,
-#	$center_name,
-#	$donor_id
-#	);
+    $self->submit_workflow(
+	$working_dir,
+	$workflow_accession,
+	$host,
+	$skip_scheduling,
+	$cluster_found,
+	$report_file,
+	$url,
+	$center_name,
+	$donor_id
+	);
 
     delete $cluster_information->{$cluster} if ($cluster_found);
 }
 
 sub submit_workflow {
     my $self = shift;
-    my ($working_dir, $workflow_accession, $host, $skip_scheduling, $cluster_found, $report_file, $url, $center_name, $sample_id) = @_;
+    my ($working_dir, 
+	$accession, 
+	$host, 
+	$skip_scheduling, 
+	$cluster_found, 
+	$report_file, 
+	$url, 
+	$center_name, 
+	$donor_id) = @_;
 
     my $dir = getcwd();
-
-    my $launch_command = "SEQWARE_SETTINGS=$Bin/../$working_dir/samples/$center_name/$sample_id/settings /usr/local/bin/seqware workflow schedule --accession $workflow_accession --host $host --ini $Bin/../$working_dir/samples/$center_name/$sample_id/workflow.ini";
+    $working_dir =  "$Bin/../$working_dir/ini/$donor_id";
+    my $ini = "$working_dir/workflow.ini";
+    my $settings = "$working_dir/settings";
+    my $launch_command = "SEQWARE_SETTINGS=$settings /usr/local/bin/seqware workflow schedule --accession $accession --host $host --ini $ini";
 
     if ($skip_scheduling) {
-        say $report_file "\tNOT LAUNCHING WORKFLOW BECAUSE --schedule-skip-workflow SPECIFIED: $Bin/../$working_dir/samples/$center_name/$sample_id/workflow.ini";
+        say $report_file "\tNOT LAUNCHING WORKFLOW BECAUSE --schedule-skip-workflow SPECIFIED: $ini";
         say $report_file "\t\tLAUNCH CMD WOULD HAVE BEEN: $launch_command\n";
         return;
     } 
     elsif ($cluster_found) {
-        say $report_file "\tLAUNCHING WORKFLOW: $Bin/../$working_dir/samples/$center_name/$sample_id/workflow.ini";
-        say $report_file "\t\tCLUSTER HOST: $host ACCESSION: $workflow_accession URL: $url";
+        say $report_file "\tLAUNCHING WORKFLOW: $ini";
+        say $report_file "\t\tCLUSTER HOST: $host ACCESSION: $accession URL: $url";
         say $report_file "\t\tLAUNCH CMD: $launch_command";
 
         my $submission_path = 'log/submission';
         `mkdir -p $submission_path`;
-        my $out_fh = IO::File->new("$Bin/../$submission_path/$sample_id.o", "w+");
-        my $err_fh = IO::File->new("$Bin/../$submission_path/$sample_id.e", "w+");
+        my $out_fh = IO::File->new("$Bin/../$submission_path/$donor_id.o", "w+");
+        my $err_fh = IO::File->new("$Bin/../$submission_path/$donor_id.e", "w+");
  
         my ($std_out, $std_err) = capture {
              no autodie qw(system);
              system( "cd $dir;
-                      export SEQWARE_SETTINGS=$Bin/../$working_dir/samples/$center_name/$sample_id/settings;
+                      export SEQWARE_SETTINGS=$settings;
                       export PATH=\$PATH:/usr/local/bin;
                       env;
-                      seqware workflow schedule --accession $workflow_accession --host $host --ini $Bin/../$working_dir/samples/$center_name/$sample_id/workflow.ini") 
+                      seqware workflow schedule --accession $accession --host $host --ini $ini")
         };
 
         print $out_fh $std_out if($std_out);
         print $err_fh $std_err if($std_err);
 
-        say $report_file "\t\tSOMETHING WENT WRONG WITH SCHEDULING THE WORKFLOW: Check error log =>  $Bin/../$submission_path/$sample_id.e and output log => $Bin/../$submission_path/$sample_id.o" if($std_err);
+        say $report_file "\t\tSOMETHING WENT WRONG WITH SCHEDULING THE WORKFLOW: Check error log =>  $Bin/../$submission_path/$donor_id.e and output log => $Bin/../$submission_path/$donor_id.o" if($std_err);
     }
     else {
-        say $report_file "\tNOT LAUNCHING WORKFLOW, NO CLUSTER AVAILABLE: $Bin/../$working_dir/samples/$center_name/$sample_id/workflow.ini";
+        say $report_file "\tNOT LAUNCHING WORKFLOW, NO CLUSTER AVAILABLE: $ini";
         say $report_file "\t\tLAUNCH CMD WOULD HAVE BEEN: $launch_command";
     } 
     say $report_file '';
@@ -309,16 +318,16 @@ sub schedule_donor {
 
     my (%specimens,%aligned_specimens);
 
-    foreach my $sample_id (@sample_ids) {      
-	$specimens{$sample_id}++;
+    foreach my $donor_id (@sample_ids) {      
+	$specimens{$donor_id}++;
 
-        next if defined $specific_sample and $specific_sample ne $sample_id;
+        next if defined $specific_sample and $specific_sample ne $donor_id;
 
-        next if @blacklist > 0 and grep {/^$sample_id$/} @blacklist;
+        next if @blacklist > 0 and grep {/^$donor_id$/} @blacklist;
 
-        if (@whitelist == 0 or grep {/^$sample_id$/} @whitelist) {
+        if (@whitelist == 0 or grep {/^$donor_id$/} @whitelist) {
 
-	    my $alignments = $donor_information->{$sample_id};
+	    my $alignments = $donor_information->{$donor_id};
 	    push @{$donor->{gnos_url}}, $gnos_url;
 	    
 	    my %said;
@@ -362,7 +371,7 @@ sub schedule_donor {
 			#
 			# If we got here, we have a useable alignment
 			#
-			$aligned_specimens{$sample_id}++;
+			$aligned_specimens{$donor_id}++;
 			
 			$aliquot{$alignment_id} = $aliquot_id;
 
@@ -383,7 +392,7 @@ sub schedule_donor {
 			
 			my $sample_type = $normal{$alignment_id} ? 'NORMAL' : $tumor{$alignment_id} ? 'TUMOR' : 'UNKNOWN';
 			
-			say $report_file "\tSAMPLE OVERVIEW\n\tSPECIMEN/SAMPLE: $sample_id ($sample_type)" unless $said{$sample_id}++;
+			say $report_file "\tSAMPLE OVERVIEW\n\tSPECIMEN/SAMPLE: $donor_id ($sample_type)" unless $said{$donor_id}++;
 			
 			say $report_file "\t\tALIGNMENT: $alignment_id ";
 			say $report_file "\t\t\tANALYZED SAMPLE/ALIQUOT: $aliquot_id";
@@ -426,7 +435,7 @@ sub schedule_donor {
 				$donor->{download_url}->{"$gnos_url/cghub/data/analysis/download/$analysis_id"} = 1;
 			    }
 			    
-			    push @{$donor->{sample_id}},$sample_id;
+			    push @{$donor->{donor_id}},$donor_id;
 			}			
 		    }
 		}
@@ -538,7 +547,7 @@ sub schedule_donor {
 			      $tabix_url,
 			      $pem_file
 	)
-	if should_be_scheduled(
+	if $self->should_be_scheduled(
 	    $report_file,
 	    $skip_scheduling
 	);
@@ -558,39 +567,26 @@ sub should_be_scheduled {
     return 1;
 }
 
-sub unaligned {
-    my $self = shift;
-    my ($aligns, $report_file) = @_;
-
-    if  ( (scalar keys %{$aligns} == 1 and defined $aligns->{unaligned}) ) {
-        say $report_file "\t\tONLY UNALIGNED";
-        return 1;
-    }
-    
-    say $report_file "\t\tCONTAINS ALIGNMENT"; 
-    return 0; 
-}
-
 sub scheduled {
     my $self = shift;
     my ($report_file, 
-	$sample, 
+	$donor, 
 	$running_samples, 
 	$force_run, 
 	$ignore_failed, 
 	$ignore_lane_count ) = @_; 
 
-    my $analysis_url_str = join ',', sort keys %{$sample->{analysis_url}};
-    $sample->{analysis_url} = $analysis_url_str;
+    my $analysis_url_str = join ',', sort keys %{$donor->{analysis_url}};
+    $donor->{analysis_url} = $analysis_url_str;
     
-    my $sample_id = $sample->{sample_id};
+    my $donor_id = $donor->{donor_id};
 
-    if (( not exists($running_samples->{$sample_id}) 
+    if (( not exists($running_samples->{$donor_id}) 
         and not exists($running_samples->{$analysis_url_str})) or $force_run) {
         say $report_file "\t\tNOT PREVIOUSLY SCHEDULED OR RUN FORCED!";
     } 
-    elsif (( (exists($running_samples->{$sample_id}{failed}) 
-	     and (scalar keys %{$running_samples->{$sample_id}} == 1)) 
+    elsif (( (exists($running_samples->{$donor_id}{failed}) 
+	     and (scalar keys %{$running_samples->{$donor_id}} == 1)) 
 	     or  ( exists($running_samples->{$analysis_url_str}{failed})
 	     and (scalar keys %{$running_samples->{$analysis_url_str}} == 1))) 
              and $ignore_failed) {
@@ -598,13 +594,13 @@ sub scheduled {
     } 
     else {
         say $report_file "\t\tIS PREVIOUSLY SCHEDULED, RUNNING, OR FAILED!";
-        say $report_file "\t\t\tSTATUS:".join ',',keys %{$running_samples->{sample_id}};
+        say $report_file "\t\t\tSTATUS:".join ',',keys %{$running_samples->{donor_id}};
         return 1;
     }
 
-    if ($sample->{total_lanes} == $sample->{bam_count} || $ignore_lane_count || $force_run) {
+    if ($donor->{total_lanes} == $donor->{bam_count} || $ignore_lane_count || $force_run) {
         say $report_file "\t\tLANE COUNT MATCHES OR IGNORED OR RUN FORCED: ignore_lane_count: ",
-	"$ignore_lane_count total lanes: $sample->{total_lanes} bam count: $sample->{bams_count}\n";
+	"$ignore_lane_count total lanes: $donor->{total_lanes} bam count: $donor->{bams_count}\n";
     } 
     else {
         say $report_file "\t\tLANE COUNT MISMATCH!";
