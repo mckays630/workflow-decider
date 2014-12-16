@@ -24,8 +24,9 @@ sub schedule_samples {
     my $self = shift;
     my %args = @_;
 
-    # Still clunky but a least args won't get mixed if they
-    # are in the wriong order
+
+    # Still clunky but a least args won't get mixed up if they
+    # are in the wrong order
     my $report_file             = $args{'report_file'};
     my $sample_information      = $args{'sample_information'};
     my $cluster_information     = $args{'cluster_information'};
@@ -50,7 +51,6 @@ sub schedule_samples {
     my $workflow_version        = $args{'workflow-version'};
     my $workflow_name           = $args{'workflow-name'};
     my $bwa_workflow_version    = $args{'bwa-workflow-version'};
-    say STDERR "--------->DEBUG: bwa $bwa_workflow_version<-------------";
     my $tabix_url               = $args{'tabix-url'};
     my $pem_file                = $args{'pem-file'};
     my $whitelist               = $args{'whitelist'};
@@ -60,18 +60,13 @@ sub schedule_samples {
 
     my $i = 0;
     foreach my $center_name (keys %{$sample_information}) {
-	say STDERR "DEBUG: SCHEDULING: $center_name"; 
         next if (defined $specific_center && $specific_center ne $center_name);
         say $report_file "SCHEDULING: $center_name";
 
 	my @blacklist = grep {s/\s+/-/} @{$blacklist->{donor}} if $blacklist and $blacklist->{donor};
 	my @whitelist = grep {s/\s+/-/} @{$whitelist->{donor}} if $whitelist and $whitelist->{donor};
 
-	say "DEBUG: whitelist ", Dumper \@whitelist;
-
         DONOR: foreach my $donor_id (keys %{$sample_information->{$center_name}}) {
-
-	    say "DEBUG: $donor_id\n";
 
 	    # Only do specified donor if applicable
             next if defined $specific_donor and $specific_donor ne $donor_id;
@@ -84,7 +79,6 @@ sub schedule_samples {
 	    my $variant_workflow = $sample_information->{$center_name}->{$donor_id}->{variant_workflow};
 	    delete $sample_information->{$center_name}->{$donor_id}->{variant_workflow}; # or else mess up specimen count
 	    if ($variant_workflow && ref $variant_workflow eq 'HASH') {
-		say "DEBUG: variant workflow", Dumper $variant_workflow;
 		if (my $variant_workflow_version = $variant_workflow->{$workflow_name} ) {
 		    my @have_version = split '.', $variant_workflow_version;
 		    my @need_version = split '.', $workflow_version;
@@ -98,7 +92,6 @@ sub schedule_samples {
 	    }
 
 	    # Skip non-whitelisted donors if applicable
-	    say STDERR "DEBUG: donor id $donor_id";
 	    my $on_whitelist = grep {/^$donor_id/} @whitelist;
             if (@whitelist == 0 or $on_whitelist) {
 		say STDERR "Donor $donor_id is on the whitelist" if $on_whitelist;
@@ -143,6 +136,7 @@ sub schedule_samples {
 
 sub schedule_workflow {
     my $self = shift;
+
     my ( $donor,
          $seqware_settings_file, 
          $report_file,
@@ -164,6 +158,7 @@ sub schedule_workflow {
 	 $pem_file
 	) = @_;
 
+
     my $cluster = (keys %{$cluster_information})[0];
     my $cluster_found = (defined($cluster) and $cluster ne '' )? 1: 0;
 
@@ -172,23 +167,23 @@ sub schedule_workflow {
     my $password = $cluster_information->{$cluster}{password};
 
     my $workflow_accession = $cluster_information->{$cluster}{workflow_accession};
-    my $workflow_version = $cluster_information->{$cluster}{workflow_version};
+    $workflow_version = $cluster_information->{$cluster}{workflow_version} if $cluster_information->{$cluster}{workflow_version};
     my $host = $cluster_information->{$cluster}{host};
 
     my $donor_id = $donor->{donor_id};
 
     if ($cluster_found or $skip_scheduling) {
-        system("mkdir -p $Bin/../$working_dir/samples/$center_name/$donor_id");
+        system("mkdir -p $Bin/../$working_dir/ini");
 
-#        $self->create_settings_file(
-#	    $donor,
-#	    $seqware_settings_file, 
-#	    $url, 
-#	    $username, 
-#	    $password, 
-#	    $working_dir, 
-#	    $center_name
-#	    );
+        $self->create_workflow_settings(
+	    $donor,
+	    $seqware_settings_file, 
+	    $url, 
+	    $username, 
+	    $password, 
+	    $working_dir, 
+	    $center_name
+	    );
 
         $self->create_workflow_ini(
 	    $donor,
@@ -317,7 +312,6 @@ sub schedule_donor {
     foreach my $sample_id (@sample_ids) {      
 	$specimens{$sample_id}++;
 
-	say "DEBUG: sample_id $sample_id";
         next if defined $specific_sample and $specific_sample ne $sample_id;
 
         next if @blacklist > 0 and grep {/^$sample_id$/} @blacklist;
@@ -350,7 +344,6 @@ sub schedule_donor {
 			my @run_bwa_workflow_versions = split /\./, $bwa_workflow_version;
 
 
-			say Dumper "DEBUG: workflow verions $bwa_workflow_version ", Dumper \@current_bwa_workflow_version, Dumper \@run_bwa_workflow_versions;
 			# Should add to list of aligns if the BWA workflow has already been run 
 			# and the first two version numbers are equal to the 
 			# desired BWA workflow version. 
@@ -360,12 +353,12 @@ sub schedule_donor {
 			    and $current_bwa_workflow_version[1] == $run_bwa_workflow_versions[1] 
 			    ) {
 			    $aligns->{$alignment_id} = 1;
+			} 
+			else {
 			}
 			
 			next unless $aligns->{$alignment_id};
 
-			say "DEBUG: We get $alignment_id for $donor_id";
-			
 			#
 			# If we got here, we have a useable alignment
 			#
@@ -450,7 +443,6 @@ sub schedule_donor {
 
     say $report_file "\tDONOR WORKLFOW ACTION OVERVIEW";
     say $report_file "\t\tALIGNED BAMS FOUND: $donor->{bam_count}";
-    
 
     # We want the most recent alignment for a given aliquot if there are > 1
     # First, relate time stamp to alignment IDs

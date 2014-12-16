@@ -4,6 +4,7 @@ package SeqWare::Schedule::Ini;
 use common::sense;
 use Template;
 use Data::Dumper;
+use Config::Simple;
 
 sub new {
     my $class = shift;
@@ -30,5 +31,34 @@ sub create_ini_file {
     say "Making ini file at $output_dir/workflow.ini";
     $tt->process($template, $data, "$output_dir/workflow.ini") || die $tt->error;
 }
+
+
+sub create_settings_file {
+    my $self = shift;
+    my (
+        $donor,
+        $seqware_settings_file,
+        $url,
+        $username,
+        $password,
+        $output_dir,
+        $center_name) = @_;
+
+    my $settings = new Config::Simple($seqware_settings_file);
+
+    $url //= '<SEQWARE URL>';
+    $username //= '<SEQWARE USER NAME>';
+    $password //= '<SEQWARE PASSWORD>';
+
+    $settings->param('SW_REST_URL', $url);
+    $settings->param('SW_REST_USER', $username);
+    $settings->param('SW_REST_PASS',$password);
+
+    my $donor_id = $donor->{donor_id};
+    say "Making settings file at $output_dir/settings";
+    $settings->write("$output_dir/settings");
+}
+
+
 
 1;

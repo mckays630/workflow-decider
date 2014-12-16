@@ -65,7 +65,8 @@ my $sample_information = $gnos_info->get( $ARGV{'--working-dir'},
 say 'Scheduling Samples';
 my $scheduler = SeqWare::Schedule::Sanger->new();
 my %args = %ARGV;
-strip_keys(%args);
+strip_keys(\%args);
+
 $args{report_file}         = $report_file;
 $args{sample_information}  = $sample_information;
 $args{cluster_information} = $cluster_information;
@@ -82,15 +83,14 @@ say 'Finished!!';
 # Grab contents of white/black list file
 
 sub strip_keys {
-    my %hash = @_;
-    my @keys = keys %hash;
+    my $hash = shift;
+    my @keys = keys %$hash;
     for my $key (@keys) {
-	my $val = $hash{$key};
-	delete $hash{$key};
+	my $val = $hash->{$key};
+	delete $hash->{$key};
 	$key =~ s/^--//;
-	$hash{$key} = $val;
+	$hash->{$key} = $val;
     }
-    return %hash;
 }
 
 
@@ -106,7 +106,8 @@ sub get_list {
     open my $list_file, '<', $file;
     
     my @list_raw = <$list_file>;
-    my @list = grep(s/\s*$//g, @list_raw);
+    my @list = grep /\S+/, @list_raw;
+    chomp @list;
 
     # If this is a donor whitelist, check the format
     my $format_OK = grep {/^\S+\s+\S+$/} @list;

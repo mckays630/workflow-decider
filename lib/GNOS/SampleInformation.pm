@@ -89,6 +89,7 @@ sub get {
     my $variant_workflow = {};
 
     my $i = 0;
+
     foreach my $result_id (keys %{$results}) {
         my $result = $results->{$result_id};
         my $analysis_full_url = $result->{analysis_full_uri};
@@ -263,7 +264,7 @@ sub get {
 
         # We don't need to save the analysis if there is no workflow name or version
 	unless ($workflow_name && $workflow_version) {
-	    say $parse_log "\tNO WORKFLOW; analysis skipped";
+	    say $parse_log "\tNO WORKFLOW INFORMATION; analysis skipped";
 	    next;
 	}
 

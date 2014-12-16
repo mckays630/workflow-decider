@@ -15,30 +15,37 @@ sub new {
     return $self;
 }
 
+sub factory {
+    my $self = shift;
+    $self->{ini_factory} ||= SeqWare::Schedule::Ini->new;
+    return $self->{ini_factory};
+}
 
-sub create_settings_file {
+sub create_workflow_settings {
     my $self = shift;
     my (
-	$donor,
-	$seqware_settings_file, 
-	$url, 
-	$username, 
-	$password, 
-	$working_dir, 
-	$center_name) = @_;
+        $donor,
+        $seqware_settings_file,
+        $url,
+        $username,
+        $password,
+        $output_dir,
+        $center_name) = @_;
 
-    my $settings = new Config::Simple("$Bin/../conf/ini/$seqware_settings_file");
+    my $factory = $self->factory;
 
-    $url //= '<SEQWARE URL>';
-    $username //= '<SEQWARE USER NAME>';
-    $password //= '<SEQWARE PASSWORD>';
-
-    $settings->param('SW_REST_URL', $url);
-    $settings->param('SW_REST_USER', $username);
-    $settings->param('SW_REST_PASS',$password);
-
+    # may be some workflow-specific manipulations here at some point
     my $donor_id = $donor->{donor_id};
-    $settings->write("$Bin/../$working_dir/samples/$center_name/$donor_id/settings");
+    $output_dir = "$Bin/../$output_dir/ini/$donor_id";
+    $seqware_settings_file = "$Bin/../conf/seqware.setting";
+
+    $factory->create_settings_file($donor,
+        $seqware_settings_file,
+        $url,
+        $username,
+        $password,
+        $output_dir,
+        $center_name);
 }
 
 sub create_workflow_ini {
@@ -54,10 +61,11 @@ sub create_workflow_ini {
 	$output_prefix, 
 	$output_dir, 
 	$working_dir, 
-	$center_name, 
+	$center_name,
 	$tabix_url,
 	$pem_file) = @_;
-    
+
+ 
     # Read in the default data
     my $defaults = "$Bin/../conf/ini/settings.conf";
     die "Settings file does not exist: $defaults" unless (-e $defaults);
@@ -102,8 +110,9 @@ sub create_workflow_ini {
     
     my $template = "$Bin/../conf/ini/workflow-$workflow_version.ini";
 
-    my $ini_factory = SeqWare::Schedule::Ini->new;
-    $ini_factory->create_ini_file("$working_dir/ini",$template,$data,$donor->{donor_id});
+    my $ini_factory = $self->factory;
+    $working_dir = "$Bin/../$working_dir/ini";
+    $ini_factory->create_ini_file($working_dir,$template,$data,$donor->{donor_id});
 }
 
 1;
