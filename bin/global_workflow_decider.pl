@@ -31,8 +31,12 @@ use Data::Dumper;
 my %ARGV = %{Decider::Config->get(\%ARGV)};
 
 unless ($ARGV{'--use-local-gnos'}) {
-    my $GS = GlobalGNOS::Search->new($ARGV{'--elastic-search-url'});
-    my $result = $GS->find_aligned_bams();
+
+    my $filter_donors = ["BOCA-UK::CGP_donor_1635843"];
+    my $gnos_repo = "https://gtrepo-ebi.annailabs.com/";
+
+    my $GS = GlobalGNOS::Search->new($ARGV{'--elasticsearch-url'});
+    my $result = $GS->get_aligned_sets($filter_donors, $gnos_repo);
 
     print Dumper keys %{$result};
 

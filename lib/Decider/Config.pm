@@ -21,8 +21,8 @@ sub get {
     
     my %decider_config = $cfg->vars();
 
-    $ARGV{'--elastic-search-url'} 
-                   = $decider_config{'global_gnos.elastic-search-url'};
+    $ARGV{'--elasticsearch-url'} 
+                   = $decider_config{'global_gnos.elasticsearch-url'};
 
     my @general_seqware_clusters = split ';', $decider_config{'general.seqware-clusters'};
     $ARGV{'--seqware-clusters'} //= \@general_seqware_clusters;

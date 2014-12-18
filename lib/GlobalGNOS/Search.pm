@@ -14,38 +14,85 @@ use JSON;
 use Data::Dumper;
 
 sub new {
-    my ($class, $elastic_search_url) = @_;
+    my ($class, $elasticsearch_url) = @_;
     my $self = {
-                 elastic_search_url => $elastic_search_url
+                 elasticsearch_url => $elasticsearch_url,
+                 query_size => 100,
+                                 
                };
-    return bless $self, $class
+    return bless $self, $class;
 }
 
 
 sub get_donors_completed_alignment {
-    my ($self) = @_;
+    my ($self, $filter_donors, $gnos_repo) = @_;
 
-    my $e = Search::Elasticsearch->new( nodes =>  $self->{elastic_search_url} );
-    my $results = $e->search({
-        body => {
-            query => {
-                        "bool" => {
-                           "must"=> [
-                                 {                         
-                                    "terms" => {
-                                       "is_alignment_completed" => ["T"]
-                                        }
-                                 },
-                            ]
-                        }
-            }
-        },
-        from => 0,
-        size => 20
-    });
+
+
+    my $query = (defined $gnos_repo)? 'gnos_repos_with_complete_alignment_set: "'.$gnos_repo."\"" : '*';
+
+    ## To Do: need to add in filtering for ones that were already aligned. 
+    my $es_query = { 
+       body => {
+           "query" => {
+              "filtered" => {
+                 "query" => {
+                    "bool" => {
+                       "must" => [
+                          {
+                             "query_string" => {
+                                "query" => "$query"
+                             }
+                          }
+                       ],
+                    }
+                 },
+                 "filter" => {
+                    "bool" => {
+                       "must" => [
+                          {
+                             "terms" => {
+                                "normal_specimen.is_aligned" => [
+                                   "T"
+                                ]
+                             }
+                          },
+                          {
+                             "terms" => {
+                                "are_all_tumor_specimens_aligned" => [
+                                   "T"
+                                ]
+                             }
+                          }
+                       ],
+                       "must_not" => {
+                           "terms" => { 
+                                  "donor_unique_id" =>
+                                  $filter_donors
+                           }
+                       }
+                  
+                    }
+                 }
+              }
+           },
+          "size" => $self->{query_size},
+           "sort" => [
+              {
+                 "gnos_study" => {
+                    "order" => "asc",
+                    "ignore_unmapped" => "true"
+                 }
+              }
+           ]
+       }
+    };
+
+    my $e = Search::Elasticsearch->new( nodes =>  $self->{elasticsearch_url} );
+    my $results = $e->search( $es_query);
 
     my @donor_sources = $results->{hits}{hits};
-
+    
     my %donors;
     foreach my $donor_source (@donor_sources) {
         foreach my $donor (@{$donor_source}) {
@@ -53,72 +100,25 @@ sub get_donors_completed_alignment {
         }
     }
     
-    my $donors = $self->group_donors_by_gnos_repo(\%donors);
-
-    return $donors;
+    return \%donors;
 }
 
-sub group_donors_by_gnos_repo {
-    my ($self, $donors) = @_;
+sub get_aligned_sets {
+    my ($self, $filter_donors, $gnos_repo, $vcf_workflow_name ) = @_;
 
-    my %grouped_donors;
+    my $donors = get_donors_completed_alignment($self, $filter_donors, $gnos_repo);
+
+    my %aligned_sets;
     foreach my $donor_id (keys %{$donors}) {
-          my $donor_info = $donors->{$donor_id};
-          print Dumper $donor_info->{gnos_repos_with_complete_alignment_set}->[0];
-          print Dumper keys %{$donor_info};
-die;
-        $grouped_donors{gnos_repo}{$donor_id} = $donor_info;
+        my $tumour_specimen = $donors->{$donor_id}{aligned_tumor_specimens};
+        my $normal_specimen = $donors->{$donor_id}{normal_specimen};
+        $aligned_sets{$donor_id} = { tumours => $tumour_specimen,
+                                     normal => $normal_specimen
+                                   };
+ 
     }
 
-    return \%grouped_donors;
-}
-
-
-sub find_aligned_bams {
-    my ($self, $vcf_workflow_name, $vcf_workflow_version, 
-               $bwa_workflow_name, $bwa_workflow_version) = @_;
-
-    my $donors = get_donors_completed_alignment($self);
-
-    $bwa_workflow_name //= 'Workflow_Bundle_BWA';
-    $bwa_workflow_version //= '2.6.0';
-  
-    my (%aligned_bams, $donor_info);
-    foreach my $donor_id (keys %{$donors}) {
-        say "Donor: $donor_id";
-        $donor_info = $donors->{$donor_id};
-
-        # check to see if a VCF was already created with workflow
-        my $vcf_files = $donor_info->{vcf_files};
-        foreach my $vcf (@{$vcf_files}) {
-            # this is not  complete: need to figure out how to actualy determine the 
-            # workflow_name / version and actually determine where the vcfs are
-            my $workflow_name = $vcf->{workflow_name};
-            my $workflow_version = $vcf->{workflow_version};
-            if (($workflow_name eq $vcf_workflow_name) 
-                                  and ($workflow_version ge $vcf_workflow_version)) {
-                     say 'Already Aligned';
-                     last;
-            }
-        }
-
-        # if not aligned check to see if there is something to align for donor
-        my $bam_files = $donor_info->{bam_files};
-        foreach my $bam (@{$bam_files}) {
-            if ($bam->{bam_type} eq 'Specimen level aligned BAM')  {
-                my $alignment = $bam->{alignment};
-                my $workflow_name = $alignment->{workflow_name};
-                my $workflow_version = $alignment->{workflow_version};
-                if (($workflow_name eq $bwa_workflow_name) 
-                                   and ($workflow_version ge $bwa_workflow_version)) {
-                     $aligned_bams{$donor_id} = $bam;
-                }
-            }
-        }
-
-    }
-
-    return \%aligned_bams;
+    return \%aligned_sets;
 }
 
 1;
