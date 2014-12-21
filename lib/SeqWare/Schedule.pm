@@ -24,13 +24,16 @@ sub schedule_samples {
     my $self = shift;
     my %args = @_;
 
+    print "IN SCHEDULE SAMPLES\n";
 
     # Still clunky but a least args won't get mixed up if they
     # are in the wrong order
     my $report_file             = $args{'report_file'};
     my $sample_information      = $args{'sample_information'};
     my $cluster_information     = $args{'cluster_information'};
-    my $running_samples         = $args{'running_sampler_ids'}; 
+    my $running_samples         = $args{'running_sample_ids'}; 
+    my $failed_samples          = $args{'failed_sample_ids'}; 
+    my $completed_samples       = $args{'completed_sample_ids'}; 
     my $skip_scheduling         = $args{'workflow-skip-scheduling'};
     my $specific_sample         = $args{'schedule-sample'};
     my $specific_donor          = $args{'schedule-center'};
@@ -67,15 +70,21 @@ sub schedule_samples {
 
     say $report_file "SAMPLE SCHEDULING INFORMATION\n";
 
+       print "HERE1\n";
     my $i = 0;
     foreach my $center_name (keys %{$sample_information}) {
+       print "HERE2\n";
         next if (defined $specific_center && $specific_center ne $center_name);
         say $report_file "SCHEDULING: $center_name";
 
 	my @blacklist = grep {s/\s+/-/} @{$blacklist->{donor}} if $blacklist and $blacklist->{donor};
 	my @whitelist = grep {s/\s+/-/} @{$whitelist->{donor}} if $whitelist and $whitelist->{donor};
 
+print Dumper \@whitelist;
+
         DONOR: foreach my $donor_id (keys %{$sample_information->{$center_name}}) {
+
+       print "HERE3\n";
 
 	    # Only do specified donor if applicable
             next if defined $specific_donor and $specific_donor ne $donor_id;
@@ -100,9 +109,22 @@ sub schedule_samples {
 		}
 	    }
 
+# put in the running+failed+completed
+my $unavail_samples = {};
+foreach my $key (keys %{$running_samples}) {
+  $unavail_samples->{$key} = 1;
+}
+foreach my $key (keys %{$failed_samples}) {
+  $unavail_samples->{$key} = 1;
+}
+foreach my $key (keys %{$completed_samples}) {
+  $unavail_samples->{$key} = 1;
+}
+
 	    # Skip non-whitelisted donors if applicable
 	    my $on_whitelist = grep {/^$donor_id/} @whitelist;
-            if (@whitelist == 0 or $on_whitelist) {
+print "WHITELIST: ".scalar(@whitelist)."\n".$on_whitelist."\n";
+            if (scalar(@whitelist) == 0 or $on_whitelist) {
 		say STDERR "Donor $donor_id is on the whitelist" if $on_whitelist;
 		
 		my $donor_information = $sample_information->{$center_name}{$donor_id};
@@ -111,7 +133,7 @@ sub schedule_samples {
 				      $donor_id, 
 				      $donor_information,
 				      $cluster_information, 
-				      $running_samples, 
+				      $unavail_samples, 
 				      $skip_scheduling,
 				      $specific_sample,
 				      $ignore_lane_count,
@@ -182,7 +204,7 @@ sub schedule_workflow {
 
     if ($cluster_found or $skip_scheduling) {
         system("mkdir -p $Bin/../$working_dir/ini");
-
+print "HERE SCHEDULE 1234\n";
         $self->create_workflow_settings(
 	    $donor,
 	    $seqware_settings_file, 
@@ -243,6 +265,8 @@ sub submit_workflow {
     my $ini = "$working_dir/workflow.ini";
     my $settings = "$working_dir/settings";
     my $launch_command = "SEQWARE_SETTINGS=$settings /usr/local/bin/seqware workflow schedule --accession $accession --host $host --ini $ini";
+
+     print "LAUNCH: $launch_command\n";
 
     if ($skip_scheduling) {
         say $report_file "\tNOT LAUNCHING WORKFLOW BECAUSE --schedule-skip-workflow SPECIFIED: $ini";
@@ -311,6 +335,7 @@ sub schedule_donor {
 	 $pem_file
 	) = @_;
 
+print "GOING TO SCHEDULE\n";
     say $report_file "DONOR/PARTICIPANT: $donor_id\n";
     
     my @sample_ids = keys %{$donor_information};
@@ -338,6 +363,10 @@ sub schedule_donor {
         if (@whitelist == 0 or grep {/^$donor_id$/} @whitelist) {
 
 	    my $alignments = $donor_information->{$donor_id};
+
+print "PRINT THE ALIGNMENT HASH\n";
+print Dumper($alignments);
+
 	    push @{$donor->{gnos_url}}, $gnos_url;
 	    
 	    my %said;
@@ -345,6 +374,8 @@ sub schedule_donor {
 	    foreach my $alignment_id (keys %{$alignments}) {
 
                 # Skip unaligned BAMs, not relevant to VC workflows
+print "ALIGNMENT ID: $alignment_id\n";
+                # FIXME: sheldon, this is not the right place to check the alignment type, it's a field in the key/values called workflow_output_bam_contents in the XML
 		next if $alignment_id eq 'unaligned';
 		
 		my $aliquots = $alignments->{$alignment_id};
@@ -537,6 +568,10 @@ sub schedule_donor {
     $donor->{normal} = \%normal;
     $donor->{tumor}  = \%tumor;
 
+print " ABOUT TO SCHEDULE\n";
+print Dumper $donor;
+print Dumper $running_samples;
+
     $self->schedule_workflow( $donor,
 			      $seqware_settings_file, 
 			      $report_file,
@@ -559,7 +594,9 @@ sub schedule_donor {
 	)
 	if $self->should_be_scheduled(
 	    $report_file,
-	    $skip_scheduling
+	    $skip_scheduling,
+            $running_samples,
+            $donor
 	);
 }
 
@@ -567,6 +604,8 @@ sub should_be_scheduled {
     my $self = shift;
     my $report_file = shift;
     my $skip_scheduling = shift;
+    my $running_samples = shift;
+    my $donor = shift;
 
     if ($skip_scheduling) {
         say $report_file "\t\tCONCLUSION: SKIPPING SCHEDULING";
@@ -574,7 +613,30 @@ sub should_be_scheduled {
     }
 
     say $report_file "\t\tCONCLUSION: SCHEDULING FOR VCF";
-    return 1;
+    #return 1;
+    # LEFT OFF WITH: need to combine the schedule function with previously_failed... Sheldon, is this what was intended?
+    return (!$self->previously_failed_running_or_completed($donor, $running_samples));
+}
+
+# TODO: combine with the schedule method below, is the scheduled method even being used currently?  
+sub previously_failed_running_or_completed {
+    my $self = shift;
+    my ($donor, 
+	$running_samples) = @_;
+   my @want_to_run;
+   foreach my $key (keys %{$donor->{analysis_ids}}) {
+     push @want_to_run, $donor->{analysis_ids}{$key};
+   } 
+   my $want_to_run_str = join (",", sort(@want_to_run));
+   my $previously_run = 0;
+   # now check 
+   foreach my $key (keys %{$running_samples}) {
+     if ($key eq $want_to_run_str) { $previously_run = 1; }
+     print "RUNNING: $key $want_to_run_str\n";
+   }
+   print "PREVIOUSLY RUN:$previously_run\n";
+die;
+   return($previously_run);
 }
 
 sub scheduled {

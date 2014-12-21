@@ -46,6 +46,10 @@ my ($cluster_information, $running_sample_ids, $failed_samples, $completed_sampl
 
 #my $failed_db = Decider::Database->failed_connect();
 
+print Dumper($cluster_information);
+print Dumper($running_sample_ids);
+print Dumper($failed_samples);
+print Dumper($completed_samples);
 
 say 'Reading in GNOS Sample Information';
 my $gnos_info = GNOS::SampleInformation->new();
@@ -71,6 +75,9 @@ $args{report_file}         = $report_file;
 $args{sample_information}  = $sample_information;
 $args{cluster_information} = $cluster_information;
 $args{running_sample_ids}  = $running_sample_ids;
+$args{failed_sample_ids}  = $failed_samples;
+$args{completed_sample_ids}  = $completed_samples;
+# TODO: need to pass in failed and other IDs too
 $args{whitelist}           = $whitelist;
 $args{blacklist}           = $blacklist;
 

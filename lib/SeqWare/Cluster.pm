@@ -127,15 +127,15 @@ sub find_available_clusters {
 
         say $report_file "\t\tWORKFLOW: ".$workflow_accession." STATUS: ".$run_status;
 
-        my ($sample_id, $created_timestamp);
+        my ($sample_id, $created_timestamp, $mergedSortedIds);
 
-     
-        if ( ($sample_id, $created_timestamp) = get_sample_info($report_file, $seqware_run))    {
+        if ( ($sample_id, $created_timestamp, $mergedSortedIds) = get_sample_info($report_file, $seqware_run))    {
 
             my $running_status = { 'pending' => 1,   'running' => 1,
                                    'scheduled' => 1, 'submitted' => 1 };
             $running_status = 'running' if ($running_status->{$run_status});
-            $samples_status->{$run_status}{$sample_id}{$created_timestamp} = 1;
+            $samples_status->{$run_status}{$mergedSortedIds}{$created_timestamp} = 1;
+            #$samples_status->{$run_status}{$sample_id}{$created_timestamp} = 1;
         }
      }
 
@@ -168,7 +168,12 @@ sub  get_sample_info {
 
     $sample_id //= $sorted_urls; 
 
-    return ($sample_id, $created_timestamp);
+    # for the variant calling workflow
+    my @mergedIds = (split (/,/, $parameters{tumourAnalysisIds}), split (/,/, $parameters{controlAnalysisId}));
+    my @sortedMergedIds = sort @mergedIds;
+    say $report_file "\t\t\tMERGED_SORTED_IDS: ".join(",", @sortedMergedIds)."\n";
+
+    return ($sample_id, $created_timestamp, join(",", @sortedMergedIds));
 } 
 
 

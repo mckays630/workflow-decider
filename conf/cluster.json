@@ -1,12 +1,12 @@
 {
     "target-vcloud-2": {
-    "workflow_accession": "2",
+    "workflow_accession": "3",
     "username": "admin@admin.com",
     "password": "admin",
     "workflow_version": "1.0.1",
-    "webservice": "http://10.0.2.20:8080/SeqWareWebService",
+    "webservice": "http://localhost:8080/SeqWareWebService",
     "host": "master",
-    "max_workflows": "2",
+    "max_workflows": "3",
     "max_scheduled_workflows": "1"
     }
 }

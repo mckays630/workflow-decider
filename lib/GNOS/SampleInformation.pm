@@ -171,6 +171,7 @@ sub get {
 
 	my $use_control = $analysis_result{use_cntl};
 
+
         my $alignment = $analysis_result{refassem_short_name};
         my $sample_id = $analysis_result{sample_id};
 
@@ -191,11 +192,14 @@ sub get {
 
         my (%attributes, $total_lanes, $aliquot_uuid, $submitter_participant_id, $submitter_donor_id, $workflow_version, 
             $submitter_sample_id, $bwa_workflow_version, $submitter_specimen_id, $bwa_workflow_name, $dcc_project_code,
-	    $vc_workflow_version, $vc_workflow_name, $workflow_name);
+	    $vc_workflow_version, $vc_workflow_name, $workflow_name, $bam_type);
         if (ref($analysis_attributes) eq 'ARRAY') {
             foreach my $attribute (@$analysis_attributes) {
                 $attributes{$attribute->{TAG}} = $attribute->{VALUE};
             }
+
+        $bam_type = $attributes{workflow_output_bam_contents};
+        print "BAM TYPE: $bam_type\n";
 
             $total_lanes = $attributes{total_lanes};
             $aliquot_uuid = $attributes{aliquot_id};
@@ -245,6 +249,7 @@ sub get {
         say $parse_log "\tSUBMITTER ALIQUOT ID:\t$submitter_aliquot_id";
         say $parse_log "\tWORKFLOW NAME:\t$workflow_name";
 	say $parse_log "\tWORKFLOW VERSION:\t$workflow_version";
+	say $parse_log "\tBAM TYPE:\t$bam_type";
 	
 	# We don't need to save the analysis for variant calls, just
 	# to record that it has been run.
@@ -267,6 +272,12 @@ sub get {
 	    say $parse_log "\tNO WORKFLOW INFORMATION; analysis skipped";
 	    next;
 	}
+
+        # don't save the analysis if unaligned
+        if ($bam_type eq 'unaligned') {
+          say $parse_log "\tUNALIZED BAM; analysis skipped";
+          next;
+        }
 
 	my ($library_name, $library_strategy, $library_source);
         my $library_descriptor;
@@ -312,6 +323,7 @@ sub get {
 	    library_source           => $library_source,
 	    alignment_genome         => $alignment,
 	    use_control              => $use_control,
+            bam_type                 => $bam_type,
 	    total_lanes              => $total_lanes,
 	    submitter_participant_id => $submitter_participant_id,
 	    sample_id                => $sample_id,
