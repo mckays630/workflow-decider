@@ -635,7 +635,6 @@ sub previously_failed_running_or_completed {
      print "RUNNING: $key $want_to_run_str\n";
    }
    print "PREVIOUSLY RUN:$previously_run\n";
-die;
    return($previously_run);
 }
 
