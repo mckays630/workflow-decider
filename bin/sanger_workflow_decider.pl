@@ -40,7 +40,7 @@ get_list($ARGV{'--schedule-blacklist-donor'},  'black', 'donor',  $blacklist);
 say 'Getting SeqWare Cluster Information';
 my ($cluster_information, $running_sample_ids, $failed_samples, $completed_samples)
           = SeqWare::Cluster->cluster_seqware_information( $report_file,
-                                                  $ARGV{'--seqware-clusters'}, 
+                                                  $ARGV{'--seqware-clusters'},
                                                   $ARGV{'--schedule-ignore-failed'},
                                                   $ARGV{'--workflow-version'});
 
@@ -50,6 +50,13 @@ print Dumper($cluster_information);
 print Dumper($running_sample_ids);
 print Dumper($failed_samples);
 print Dumper($completed_samples);
+
+if (defined($ARGV{'--local-status-cache'})) {
+  say 'Combining Previous Results with Local Cache File';
+  ($running_sample_ids, $failed_samples, $completed_samples) = SeqWare::Cluster->combine_local_data($running_sample_ids, $failed_samples, $completed_samples, $ARGV{'--local-status-cache'});
+}
+
+die;
 
 say 'Reading in GNOS Sample Information';
 my $gnos_info = GNOS::SampleInformation->new();
@@ -106,28 +113,25 @@ sub get_list {
     my $color = shift;
     my $type  = shift;
     my $list  = shift;
-    
+
     my $file = "$Bin/../${color}list/$path";
     die "${color}list does not exist: $file" if (not -e $file);
-    
+
     open my $list_file, '<', $file;
-    
+
     my @list_raw = <$list_file>;
     my @list = grep /\S+/, @list_raw;
     chomp @list;
 
     # If this is a donor whitelist, check the format
     my $format_OK = grep {/^\S+\s+\S+$/} @list;
-    
+
     if ($color =~ /white|black/ && $type eq 'donor' && (!$format_OK || $format_OK != @list)) {
 	warn "$type $color";
 	die "Error: Donor ${color}list requires two columns (study_name,participant_id)\n";
     }
 
     close $list_file;
-    
+
     $list->{$type} = \@list;
 }
-
-
-
