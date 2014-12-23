@@ -7,6 +7,7 @@ perl bin/sanger_workflow_decider.pl \
 --gnos-url  https://gtrepo-etri.annailabs.com \
 --decider-config conf/decider.ini \
 --use-cached-xml \
+--local-status-cache local-status-cache.tsv  \
 #--schedule-whitelist-donor donors_I_want.txt \
 
 #https://gtrepo-etri.annailabs.com  \
