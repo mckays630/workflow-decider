@@ -22,7 +22,40 @@ use Data::Dumper;
 sub combine_local_data {
   my ($self, $running_sample_ids, $failed_samples, $completed_samples, $local_cache_file) = @_;
   print Dumper $running_sample_ids;
-  die;
+  # $samples_status->{$run_status}{$mergedSortedIds}{$created_timestamp}{$sample_id} = $run_status;
+  # read it if it exists and add to structure
+  if (-e $local_cache_file && -s $local_cache_file > 0) {
+    open IN, "<$local_cache_file" or die "Can't open file $local_cache_file for reading";
+    while(<IN>) {
+      chomp;
+      my @a = split /\t/;
+      if ($a[3] eq 'running') {
+        $running_sample_ids->{$a[0]}{$a[1]}{$a[2]} = $a[3];
+      } elsif ($a[3] eq 'completed') {
+        $completed_samples->{$a[0]}{$a[1]}{$a[2]} = $a[3];
+      } elsif ($a[3] eq 'failed') {
+        $failed_samples->{$a[0]}{$a[1]}{$a[2]} = $a[3];
+      } else {
+        # just add to failed if don't know
+        $failed_samples->{$a[0]}{$a[1]}{$a[2]} = $a[3];
+      }
+    }
+    close IN;
+  }
+  # now save these back out
+  open OUT, ">$local_cache_file" or die "Can't open file $local_cache_file for output";
+  foreach my $hash ($running_sample_ids, $failed_samples, $completed_samples) {
+    foreach my $mergedSortedIds (keys %{$hash}) {
+      foreach my $created_timestamp (keys %{$hash->{$mergedSortedIds}}) {
+        foreach my $sample_id (keys %{$hash->{$mergedSortedIds}{$created_timestamp}}) {
+          print OUT "$mergedSortedIds\t$created_timestamp\t$sample_id\t".$hash->{$mergedSortedIds}{$created_timestamp}{$sample_id}."\n";
+        }
+      }
+    }
+  }
+  close OUT;
+  # return the structures
+  return($running_sample_ids, $failed_samples, $completed_samples);
 }
 
 sub cluster_seqware_information {
@@ -140,7 +173,8 @@ sub find_available_clusters {
             my $running_status = { 'pending' => 1,   'running' => 1,
                                    'scheduled' => 1, 'submitted' => 1 };
             $running_status = 'running' if ($running_status->{$run_status});
-            $samples_status->{$run_status}{$mergedSortedIds}{$created_timestamp} = 1;
+            $samples_status->{$run_status}{$mergedSortedIds}{$created_timestamp}{$sample_id} = $run_status;
+            #$samples_status->{$run_status}{$mergedSortedIds}{$created_timestamp} = 1;
             #$samples_status->{$run_status}{$sample_id}{$created_timestamp} = 1;
         }
      }

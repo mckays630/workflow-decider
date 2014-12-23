@@ -55,10 +55,6 @@ file in the conf folder.
 
 Tab-seperated file describing the previous aliquot-ids that were scheduled, completed, failed, or running. This is not particularly workflow-agnostic but it's used when working with Youxia since VMs can be retired at any time.  By having the decider cache these knowledge about what has been run previously and failed is retained.
 
-=for Euclid:
-        file.type: readable
-        repeatable
-
 =item --workflow-name[=][ ]<workflow_name>
 
 Specify the variant caller workflow name to be run (eq SangerPancancerCgpCnIndelSnvStr)
