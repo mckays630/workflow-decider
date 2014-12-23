@@ -19,6 +19,12 @@ use Config::Simple;
 
 use Data::Dumper;
 
+sub combine_local_data {
+  my ($self, $running_sample_ids, $failed_samples, $completed_samples, $local_cache_file) = @_;
+  print Dumper $running_sample_ids;
+  die;
+}
+
 sub cluster_seqware_information {
     my ($class, $report_file, $clusters_json, $ignore_failed, $run_workflow_version) = @_;
 
@@ -38,9 +44,9 @@ sub cluster_seqware_information {
        $samples_status_ids);
     foreach my $cluster_name (keys %{$clusters}) {
         my $cluster_metadata = $clusters->{$cluster_name};
-        ($cluster_info, $samples_status_ids) 
+        ($cluster_info, $samples_status_ids)
             = seqware_information( $report_file,
-                                   $cluster_name, 
+                                   $cluster_name,
                                    $cluster_metadata,
                                    $run_workflow_version);
 
@@ -59,7 +65,7 @@ sub cluster_seqware_information {
         foreach my $sample_id (keys %{$samples_status_ids->{completed}}) {
              $completed_samples{$sample_id} = $samples_status_ids->{completed}->{$sample_id};
         }
-      
+
     }
 
     return (\%cluster_information, \%running_samples, \%failed_samples, \%completed_samples);
@@ -77,7 +83,7 @@ sub seqware_information {
 
     $max_running = 0 if ($max_running eq "");
 
-    $max_scheduled_workflows = $max_running 
+    $max_scheduled_workflows = $max_running
           if ( $max_scheduled_workflows eq "" || $max_scheduled_workflows > $max_running);
 
     say $report_file "EXAMINING CLUSER: $cluster_name";
@@ -110,7 +116,7 @@ sub seqware_information {
             $cluster_info{"$cluster_name-$i"} = \%cluster_metadata
                 if ($run_workflow_version eq $cluster_metadata{workflow_version});
         }
-    } 
+    }
     else {
         say $report_file "\tCLUSTER HAS RUNNING WORKFLOWS, NOT ADDING TO AVAILABLE CLUSTERS";
     }
@@ -156,7 +162,7 @@ sub  get_sample_info {
     }
 
     my $sample_id = $parameters{sample_id};
-   
+
 
     my @urls = split /,/, $parameters{gnos_input_metadata_urls};
     say $report_file "\t\t\tSAMPLE: $sample_id";
@@ -166,7 +172,7 @@ sub  get_sample_info {
     say $report_file "\t\t\tCWD: ".$parameters{currentWorkingDir};
     say $report_file "\t\t\tWORKFLOW ACCESSION: ".$parameters{swAccession}."\n";
 
-    $sample_id //= $sorted_urls; 
+    $sample_id //= $sorted_urls;
 
     # for the variant calling workflow
     my @mergedIds = (split (/,/, $parameters{tumourAnalysisIds}), split (/,/, $parameters{controlAnalysisId}));
@@ -174,8 +180,7 @@ sub  get_sample_info {
     say $report_file "\t\t\tMERGED_SORTED_IDS: ".join(",", @sortedMergedIds)."\n";
 
     return ($sample_id, $created_timestamp, join(",", @sortedMergedIds));
-} 
-
+}
 
 
 1;
