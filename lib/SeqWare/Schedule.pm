@@ -275,11 +275,13 @@ sub submit_workflow {
      print "LAUNCH: $launch_command\n";
 
     if ($skip_scheduling) {
+        print "\tNOT LAUNCHING WORKFLOW BECAUSE --schedule-skip-workflow SPECIFIED: $ini\n";
         say $report_file "\tNOT LAUNCHING WORKFLOW BECAUSE --schedule-skip-workflow SPECIFIED: $ini";
         say $report_file "\t\tLAUNCH CMD WOULD HAVE BEEN: $launch_command\n";
         return;
     }
     elsif ($cluster_found) {
+        print "\tLAUNCHING WORKFLOW: $ini\n";
         say $report_file "\tLAUNCHING WORKFLOW: $ini";
         say $report_file "\t\tCLUSTER HOST: $host ACCESSION: $accession URL: $url";
         say $report_file "\t\tLAUNCH CMD: $launch_command";
@@ -304,6 +306,7 @@ sub submit_workflow {
         say $report_file "\t\tSOMETHING WENT WRONG WITH SCHEDULING THE WORKFLOW: Check error log =>  $Bin/../$submission_path/$donor_id.e and output log => $Bin/../$submission_path/$donor_id.o" if($std_err);
     }
     else {
+        print "\tNOT LAUNCHING WORKFLOW, NO CLUSTER AVAILABLE: $ini\n";
         say $report_file "\tNOT LAUNCHING WORKFLOW, NO CLUSTER AVAILABLE: $ini";
         say $report_file "\t\tLAUNCH CMD WOULD HAVE BEEN: $launch_command";
     }
