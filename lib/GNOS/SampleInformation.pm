@@ -199,7 +199,7 @@ sub get {
             }
 
         $bam_type = $attributes{workflow_output_bam_contents};
-        print "BAM TYPE: $bam_type\n";
+	#print "BAM TYPE: $bam_type\n";
 
             $total_lanes = $attributes{total_lanes};
             $aliquot_uuid = $attributes{aliquot_id};
