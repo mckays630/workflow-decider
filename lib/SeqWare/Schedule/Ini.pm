@@ -45,6 +45,8 @@ sub create_settings_file {
         $output_dir,
         $center_name) = @_;
 
+print "SETTINGS FILE TEMPLATE IS: $seqware_settings_file\n";
+
     my $settings = new Config::Simple($seqware_settings_file);
 
     $url //= '<SEQWARE URL>';
