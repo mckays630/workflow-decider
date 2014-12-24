@@ -5,6 +5,7 @@ use common::sense;
 use Template;
 use Data::Dumper;
 use Config::Simple;
+use File::Spec;
 
 sub new {
     my $class = shift;
@@ -29,7 +30,7 @@ sub create_ini_file {
 
     # make an ini file
     say "Making ini file at $output_dir/workflow.ini";
-    $tt->process($template, $data, "$output_dir/workflow.ini") || die $tt->error;
+    $tt->process(File::Spec->rel2abs($template), $data, File::Spec->rel2abs("$output_dir/workflow.ini")) || die $tt->error;
 }
 
 
