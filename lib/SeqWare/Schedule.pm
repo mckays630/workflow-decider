@@ -196,6 +196,8 @@ sub schedule_workflow {
     my $username = $cluster_information->{$cluster}{username};
     my $password = $cluster_information->{$cluster}{password};
 
+    print "URL $url USERNAME $username PASS $password\n";
+
     my $workflow_accession = $cluster_information->{$cluster}{workflow_accession};
     $workflow_version = $cluster_information->{$cluster}{workflow_version} if $cluster_information->{$cluster}{workflow_version};
     my $host = $cluster_information->{$cluster}{host};
