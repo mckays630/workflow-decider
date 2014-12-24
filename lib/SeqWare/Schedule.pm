@@ -370,8 +370,8 @@ print "GOING TO SCHEDULE\n";
 
 	    my $alignments = $donor_information->{$donor_id};
 
-print "PRINT THE ALIGNMENT HASH\n";
-print Dumper($alignments);
+#print "PRINT THE ALIGNMENT HASH\n";
+#print Dumper($alignments);
 
 	    push @{$donor->{gnos_url}}, $gnos_url;
 
