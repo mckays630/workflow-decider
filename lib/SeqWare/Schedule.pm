@@ -578,8 +578,8 @@ print "ALIGNMENT ID: $alignment_id\n";
     $donor->{tumor}  = \%tumor;
 
 print " ABOUT TO SCHEDULE\n";
-print Dumper $donor;
-print Dumper $running_samples;
+#print Dumper $donor;
+#print Dumper $running_samples;
 
     $self->schedule_workflow( $donor,
 			      $seqware_settings_file,
