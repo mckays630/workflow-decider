@@ -192,6 +192,10 @@ sub schedule_workflow {
     my $cluster = (keys %{$cluster_information})[0];
     my $cluster_found = (defined($cluster) and $cluster ne '' )? 1: 0;
 
+    print Dumper $cluster_information;
+    print "CLUSTER: $cluster\n";
+    print Dumper $cluster_information->{$cluster};
+
     my $url = $cluster_information->{$cluster}{webservice};
     my $username = $cluster_information->{$cluster}{username};
     my $password = $cluster_information->{$cluster}{password};
