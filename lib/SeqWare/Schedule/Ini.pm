@@ -49,6 +49,8 @@ print "SETTINGS FILE TEMPLATE IS: $seqware_settings_file\n";
 
     my $settings = new Config::Simple($seqware_settings_file);
 
+    print "TEMPLATE VALUES TO FILL IN: URL $url USERNAME $username PASS $password\n";
+
     $url //= '<SEQWARE URL>';
     $username //= '<SEQWARE USER NAME>';
     $password //= '<SEQWARE PASSWORD>';
