@@ -60,6 +60,9 @@ print "SETTINGS FILE TEMPLATE IS: $seqware_settings_file\n";
     my $donor_id = $donor->{donor_id};
     say "Making settings file at $output_dir/settings";
     $settings->write("$output_dir/settings");
+
+    # clearly nobody tested this because then you'd notice that this library starts comments with ";" while seqware settings file uses "#" as the comment string :-(  This causes the seqware command line to *recreate* and empty settings file over this one you just created and the command then blocks forever waiting for user feedback to fill in the seqware settings file.
+    system("cat $output_dir/settings | grep -v '^;' > $output_dir/settings.tmp && mv $output_dir/settings.tmp $output_dir/settings");
 }
 
 
