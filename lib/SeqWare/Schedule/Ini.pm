@@ -53,6 +53,8 @@ print "SETTINGS FILE TEMPLATE IS: $seqware_settings_file\n";
     $username //= '<SEQWARE USER NAME>';
     $password //= '<SEQWARE PASSWORD>';
 
+    print "TEMPLATE VALUES TO FILL IN: URL $url USERNAME $username PASS $password\n";
+
     $settings->param('SW_REST_URL', $url);
     $settings->param('SW_REST_USER', $username);
     $settings->param('SW_REST_PASS',$password);
