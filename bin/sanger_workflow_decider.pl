@@ -44,6 +44,15 @@ my ($cluster_information, $running_sample_ids, $failed_samples, $completed_sampl
                                                   $ARGV{'--schedule-ignore-failed'},
                                                   $ARGV{'--workflow-version'});
 
+print "RUNNING:\n";
+print Dumper($running_sample_ids);
+print "FAILED:\n";
+print Dumper($failed_samples);
+print "COMPLETED:\n";
+print Dumper($completed_samples);
+
+die;
+
 #my $failed_db = Decider::Database->failed_connect();
 
 #print "CLUSTER INFO:\n";

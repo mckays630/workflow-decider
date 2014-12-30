@@ -21,7 +21,7 @@ use Data::Dumper;
 
 sub combine_local_data {
   my ($self, $running_sample_ids, $failed_samples, $completed_samples, $local_cache_file) = @_;
-  print Dumper $running_sample_ids;
+  #print Dumper $running_sample_ids;
   # $samples_status->{$run_status}{$mergedSortedIds}{$created_timestamp}{$sample_id} = $run_status;
   # read it if it exists and add to structure
   if (-e $local_cache_file && -s $local_cache_file > 0) {
