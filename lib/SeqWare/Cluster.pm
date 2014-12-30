@@ -140,6 +140,8 @@ sub seqware_information {
         my $seqware_runs_list = $xs->XMLin($workflow_runs_xml);
         my $seqware_runs = $seqware_runs_list->{list};
 
+        print Dumper($seqware_runs);
+
         $samples_status = find_available_clusters($report_file, $seqware_runs,
                    $workflow_accession, $samples_status, $run_workflow_version);
     }
