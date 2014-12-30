@@ -145,7 +145,7 @@ sub seqware_information {
 
         construct_failure_reports($seqware_runs, $failure_reports_dir);
 # LEFT OFF WITH: this contains detailed info from each step in the workflow and can be used to create a really complete report for failures
-        print Dumper($seqware_runs);
+        #print Dumper($seqware_runs);
 
         $samples_status = find_available_clusters($report_file, $seqware_runs,
                    $workflow_accession, $samples_status, $run_workflow_version);
@@ -169,11 +169,13 @@ sub seqware_information {
 
 sub construct_failure_reports {
   my ($info, $failure_reports_dir) = @_;
-  system("mkdir -p $failure_reports_dir");
-  foreach my $entry (@{$info}) {
-    if ($entry->{status}[0] eq 'failed') {
-      foreach my $key (keys %{$entry}) {
-        print "Key: $key\n";
+  if ($failure_reports_dir ne "") {
+    system("mkdir -p $failure_reports_dir");
+    foreach my $entry (@{$info}) {
+      if ($entry->{status}[0] eq 'failed') {
+        foreach my $key (keys %{$entry}) {
+          print "Key: $key\n";
+        }
       }
     }
   }
