@@ -174,11 +174,25 @@ sub construct_failure_reports {
     foreach my $entry (@{$info}) {
       if ($entry->{status}[0] eq 'failed') {
         my $cwd = $entry->{currentWorkingDir}[0];
-        print "CWD: $cwd\n";
-        system("mkdir -p $failure_reports_dir/");
+        $cwd =~ /\/(oozie-[^\/]+)$/;
+        my $uniq_name = $1;
+        print "CWD: $uniq_name\n";
+        system("mkdir -p $failure_reports_dir/$uniq_name");
+        open OUT, ">$failure_reports_dir/$uniq_name/summary.tsv" or die;
         foreach my $key (keys %{$entry}) {
-          print "Key: $key\n";
+          next if ($key eq "iniFile" or $key eq "stdErr" or $key eq "stdOut");
+          print OUT "$key\t".$entry->{$key}."\n";
         }
+        close OUT;
+        open OUT, ">$failure_reports_dir/$uniq_name/stderr.txt" or die;
+        print OUT $entry->{'stdErr'};
+        close OUT;
+        open OUT, ">$failure_reports_dir/$uniq_name/stdout.txt" or die;
+        print OUT $entry->{'stdOut'};
+        close OUT;
+        open OUT, ">$failure_reports_dir/$uniq_name/workflow.ini" or die;
+        print OUT $entry->{'iniFile'};
+        close OUT;
       }
     }
   }
