@@ -181,17 +181,17 @@ sub construct_failure_reports {
         open OUT, ">$failure_reports_dir/$uniq_name/summary.tsv" or die;
         foreach my $key (keys %{$entry}) {
           next if ($key eq "iniFile" or $key eq "stdErr" or $key eq "stdOut");
-          print OUT "$key\t".$entry->{$key}."\n";
+          print OUT "$key\t".$entry->{$key}[0]."\n";
         }
         close OUT;
         open OUT, ">$failure_reports_dir/$uniq_name/stderr.txt" or die;
-        print OUT $entry->{'stdErr'};
+        print OUT $entry->{'stdErr'}[0];
         close OUT;
         open OUT, ">$failure_reports_dir/$uniq_name/stdout.txt" or die;
-        print OUT $entry->{'stdOut'};
+        print OUT $entry->{'stdOut'}[0];
         close OUT;
         open OUT, ">$failure_reports_dir/$uniq_name/workflow.ini" or die;
-        print OUT $entry->{'iniFile'};
+        print OUT $entry->{'iniFile'}[0];
         close OUT;
       }
     }
