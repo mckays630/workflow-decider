@@ -43,7 +43,7 @@ sub combine_local_data {
     }
     close IN;
   }
-  # now save these back out
+  # now save these back out, running is always a fresh list of what's really running
   open OUT, ">$local_cache_file" or die "Can't open file $local_cache_file for output";
   foreach my $hash ($running_sample_ids, $failed_samples, $completed_samples) {
     foreach my $mergedSortedIds (keys %{$hash}) {
@@ -78,6 +78,7 @@ sub cluster_seqware_information {
        $samples_status_ids);
     foreach my $cluster_name (keys %{$clusters}) {
         my $cluster_metadata = $clusters->{$cluster_name};
+        print Dumper($cluster_metadata);
         ($cluster_info, $samples_status_ids)
             = seqware_information( $report_file,
                                    $cluster_name,
