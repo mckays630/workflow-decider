@@ -30,7 +30,8 @@ sub combine_local_data {
       chomp;
       my @a = split /\t/;
       if ($a[3] eq 'running') {
-        $running_sample_ids->{$a[0]}{$a[1]}{$a[2]} = $a[3];
+        #$running_sample_ids->{$a[0]}{$a[1]}{$a[2]} = $a[3];
+        # never cache the running, always rediscover in case a running box was terminated, want to restart
       } elsif ($a[3] eq 'completed') {
         $completed_samples->{$a[0]}{$a[1]}{$a[2]} = $a[3];
       } elsif ($a[3] eq 'failed') {
@@ -88,7 +89,8 @@ sub cluster_seqware_information {
         }
 
         foreach my $sample_id (keys %{$samples_status_ids->{running}}) {
-           $running_samples{$sample_id} = 1;
+          #$running_samples{$sample_id} = 1;
+          $running_samples{$sample_id} = $samples_status_ids->{running}{$sample_id};
         }
 
         foreach my $sample_id (keys %{$samples_status_ids->{failed}}) {
