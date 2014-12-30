@@ -173,6 +173,9 @@ sub construct_failure_reports {
     system("mkdir -p $failure_reports_dir");
     foreach my $entry (@{$info}) {
       if ($entry->{status}[0] eq 'failed') {
+        my $cwd = $entry->{currentWorkingDir};
+        print "CWD: $cwd\n";
+        system("mkdir -p $failure_reports_dir/");
         foreach my $key (keys %{$entry}) {
           print "Key: $key\n";
         }
