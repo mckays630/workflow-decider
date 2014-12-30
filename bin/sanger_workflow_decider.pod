@@ -55,6 +55,10 @@ file in the conf folder.
 
 Tab-seperated file describing the previous aliquot-ids that were scheduled, completed, failed, or running. This is not particularly workflow-agnostic but it's used when working with Youxia since VMs can be retired at any time.  By having the decider cache these knowledge about what has been run previously and failed is retained.
 
+=item --failure-reports-dir[=][ ]<file>
+
+This is the directory to which failures reports will be logged.  This is extremely useful if the hosts workflow are running on are ephemeral and disappear often.
+
 =item --workflow-name[=][ ]<workflow_name>
 
 Specify the variant caller workflow name to be run (eq SangerPancancerCgpCnIndelSnvStr)

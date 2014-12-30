@@ -60,7 +60,7 @@ sub combine_local_data {
 }
 
 sub cluster_seqware_information {
-    my ($class, $report_file, $clusters_json, $ignore_failed, $run_workflow_version) = @_;
+    my ($class, $report_file, $clusters_json, $ignore_failed, $run_workflow_version, $failure_reports_dir) = @_;
 
     my ($clusters, $cluster_file_path);
     foreach my $cluster_json (@{$clusters_json}) {
@@ -83,7 +83,10 @@ sub cluster_seqware_information {
             = seqware_information( $report_file,
                                    $cluster_name,
                                    $cluster_metadata,
-                                   $run_workflow_version);
+                                   $run_workflow_version,
+                                   $failure_reports_dir);
+
+        # LEFT OFF HERE: need to pass back the structure for failed workflows, parse it, and write out a report for it
 
         foreach my $cluster (keys %{$cluster_info}) {
            $cluster_information{$cluster} = $cluster_info->{$cluster};
@@ -108,7 +111,7 @@ sub cluster_seqware_information {
 }
 
 sub seqware_information {
-    my ($report_file, $cluster_name, $cluster_metadata, $run_workflow_version) = @_;
+    my ($report_file, $cluster_name, $cluster_metadata, $run_workflow_version, $failure_reports_dir) = @_;
 
     my $user = $cluster_metadata->{username};
     my $password = $cluster_metadata->{password};
@@ -140,6 +143,8 @@ sub seqware_information {
         my $seqware_runs_list = $xs->XMLin($workflow_runs_xml);
         my $seqware_runs = $seqware_runs_list->{list};
 
+        construct_failure_reports($seqware_runs, $failure_reports_dir);
+# LEFT OFF WITH: this contains detailed info from each step in the workflow and can be used to create a really complete report for failures
         print Dumper($seqware_runs);
 
         $samples_status = find_available_clusters($report_file, $seqware_runs,
@@ -160,6 +165,18 @@ sub seqware_information {
     }
 
     return (\%cluster_info, $samples_status);
+}
+
+sub construct_failure_reports {
+  my ($info, $failure_reports_dir) = @_;
+  system("mkdir -p $failure_reports_dir");
+  foreach my $entry (@{$info}) {
+    if ($entry->{status}[0] eq 'failed') {
+      foreach my $key (keys %{$entry}) {
+        print "Key: $key\n";
+      }
+    }
+  }
 }
 
 sub find_available_clusters {

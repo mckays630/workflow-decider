@@ -42,7 +42,8 @@ my ($cluster_information, $running_sample_ids, $failed_samples, $completed_sampl
           = SeqWare::Cluster->cluster_seqware_information( $report_file,
                                                   $ARGV{'--seqware-clusters'},
                                                   $ARGV{'--schedule-ignore-failed'},
-                                                  $ARGV{'--workflow-version'});
+                                                  $ARGV{'--workflow-version'},
+                                                  $ARGV{'--failure-reports-dir'});
 
 print "RUNNING:\n";
 print Dumper($running_sample_ids);
