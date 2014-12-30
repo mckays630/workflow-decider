@@ -78,7 +78,7 @@ sub cluster_seqware_information {
        $samples_status_ids);
     foreach my $cluster_name (keys %{$clusters}) {
         my $cluster_metadata = $clusters->{$cluster_name};
-        print Dumper($cluster_metadata);
+        #print Dumper($cluster_metadata);
         ($cluster_info, $samples_status_ids)
             = seqware_information( $report_file,
                                    $cluster_name,
@@ -144,7 +144,6 @@ sub seqware_information {
         my $seqware_runs = $seqware_runs_list->{list};
 
         construct_failure_reports($seqware_runs, $failure_reports_dir);
-# LEFT OFF WITH: this contains detailed info from each step in the workflow and can be used to create a really complete report for failures
         #print Dumper($seqware_runs);
 
         $samples_status = find_available_clusters($report_file, $seqware_runs,
