@@ -171,25 +171,26 @@ sub construct_failure_reports {
   if ($failure_reports_dir ne "") {
     system("mkdir -p $failure_reports_dir");
     foreach my $entry (@{$info}) {
-      if ($entry->{status}[0] eq 'failed') {
+      my $status = $entry->{status}[0];
+      if ($entry->{status}[0] eq 'failed' or $entry->{status}[0] eq 'completed') {
         my $cwd = $entry->{currentWorkingDir}[0];
         $cwd =~ /\/(oozie-[^\/]+)$/;
         my $uniq_name = $1;
         #print "CWD: $uniq_name\n";
-        system("mkdir -p $failure_reports_dir/$uniq_name");
-        open OUT, ">$failure_reports_dir/$uniq_name/summary.tsv" or die;
+        system("mkdir -p $failure_reports_dir/$status/$uniq_name");
+        open OUT, ">$failure_reports_dir/$status/$uniq_name/summary.tsv" or die;
         foreach my $key (keys %{$entry}) {
           next if ($key eq "iniFile" or $key eq "stdErr" or $key eq "stdOut");
           print OUT "$key\t".$entry->{$key}[0]."\n";
         }
         close OUT;
-        open OUT, ">$failure_reports_dir/$uniq_name/stderr.txt" or die;
+        open OUT, ">$failure_reports_dir/$status/$uniq_name/stderr.txt" or die;
         print OUT $entry->{'stdErr'}[0];
         close OUT;
-        open OUT, ">$failure_reports_dir/$uniq_name/stdout.txt" or die;
+        open OUT, ">$failure_reports_dir/$status/$uniq_name/stdout.txt" or die;
         print OUT $entry->{'stdOut'}[0];
         close OUT;
-        open OUT, ">$failure_reports_dir/$uniq_name/workflow.ini" or die;
+        open OUT, ">$failure_reports_dir/$status/$uniq_name/workflow.ini" or die;
         print OUT $entry->{'iniFile'}[0];
         close OUT;
       }
