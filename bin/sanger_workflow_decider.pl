@@ -44,9 +44,6 @@ my ($cluster_information, $running_sample_ids, $failed_samples, $completed_sampl
                                                   $ARGV{'--schedule-ignore-failed'},
                                                   $ARGV{'--workflow-version'});
 
-#my $failed_db = Decider::Database->failed_connect();
-
-
 say 'Reading in GNOS Sample Information';
 my $gnos_info = GNOS::SampleInformation->new();
 if ($ARGV{'--filter-downloads-by-whitelist'}) {

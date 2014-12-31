@@ -73,6 +73,10 @@ Specify the bwa workflow required to proceed to variant calling (eg 2.6.0)
 
 URL for a GNOS server, e.g. https://gtrepo-ebi.annailabs.com
 
+=item --gnos-upload-url[=][ ]<gnos_upload_url>
+
+URL for a GNOS server to upload (if different from --gnos-url)
+
 =item --working-dir[=][ ]<working_directory>
 
 A place for temporary ini and settings files
@@ -190,7 +194,7 @@ Indicates no workflow should be scheduled, just summary of what would have been 
 
 =item --workflow-upload-results
 
-A flag indicating the resulting BAM files and metadata should be uploaded to GNOS, default is to not upload!!!
+A flag indicating the resulting VCF files and metadata should be uploaded to GNOS, default is to not upload!!!
 
 =item --workflow-skip-gtdownload
 
