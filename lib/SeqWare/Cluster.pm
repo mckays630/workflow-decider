@@ -175,7 +175,7 @@ sub construct_failure_reports {
         my $cwd = $entry->{currentWorkingDir}[0];
         $cwd =~ /\/(oozie-[^\/]+)$/;
         my $uniq_name = $1;
-        print "CWD: $uniq_name\n";
+        #print "CWD: $uniq_name\n";
         system("mkdir -p $failure_reports_dir/$uniq_name");
         open OUT, ">$failure_reports_dir/$uniq_name/summary.tsv" or die;
         foreach my $key (keys %{$entry}) {
