@@ -395,6 +395,9 @@ print "ALIGNMENT ID: $alignment_id\n";
 		    foreach my $library_id (keys %{$libraries}) {
 			my $library = $libraries->{$library_id};
 
+      # DEBUG
+      print Dumper($library); die;
+
 			my $current_bwa_workflow_version = $library->{bwa_workflow_version};
 			my @current_bwa_workflow_version = keys %$current_bwa_workflow_version;
 			$current_bwa_workflow_version = $current_bwa_workflow_version[0];
