@@ -396,7 +396,7 @@ print "ALIGNMENT ID: $alignment_id\n";
 			my $library = $libraries->{$library_id};
 
       # DEBUG
-      print Dumper($library); die;
+      print Dumper($library);
 
 			my $current_bwa_workflow_version = $library->{bwa_workflow_version};
 			my @current_bwa_workflow_version = keys %$current_bwa_workflow_version;
@@ -428,18 +428,36 @@ print "ALIGNMENT ID: $alignment_id\n";
 
 			$aliquot{$alignment_id} = $aliquot_id;
 
+      # FIXME: this is an unsafe method
 			# Is it tumor or normal?
 			my ($use_control) = keys %{$library->{use_control}};
 
-			if ($use_control and $use_control eq 'N/A') {
-			    $normal{$alignment_id}++;
-			}
-			elsif ($use_control) {
-			    $tumor{$alignment_id}++;
-			}
-			else {
-			    say STDERR "This is an unknown tissue type!";
-			}
+      #if ($use_control and $use_control eq 'N/A' ) {
+      #  $normal{$alignment_id}++;
+      #}
+      #elsif ($use_control) {
+      #  $tumor{$alignment_id}++;
+      #}
+      #else {
+      #  say STDERR "This is an unknown tissue type!";
+      #}
+
+
+      my ($dcc_specimen_type) = keys %{$library->{dcc_specimen_type}};
+      # safer way to tell
+      # see https://wiki.oicr.on.ca/display/PANCANCER/PCAWG+%28a.k.a.+PCAP+or+PAWG%29+Sequence+Submission+SOP+-+v1.0
+      # the Appendix has a list of all possible terms.
+      # FIXME: we aren't dealing with Xenograft and Cell Line
+      if ($dcc_specimen_type =~ /normal/i) {
+        $normal{$alignment_id}++;
+      }
+      elsif ($dcc_specimen_type =~ /tumor/i || $dcc_specimen_type =~ /tumour/i) {
+        $tumor{$alignment_id}++;
+      }
+      else {
+        say STDERR "This is an unknown tissue type!";
+      }
+
 			# We can't use this!
 			next unless keys %tumor or keys %normal;
 
