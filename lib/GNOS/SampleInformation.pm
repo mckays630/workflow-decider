@@ -200,7 +200,7 @@ sub get {
 
         my (%attributes, $total_lanes, $aliquot_uuid, $submitter_participant_id, $submitter_donor_id, $workflow_version,
             $submitter_sample_id, $bwa_workflow_version, $submitter_specimen_id, $bwa_workflow_name, $dcc_project_code,
-	    $vc_workflow_version, $vc_workflow_name, $workflow_name, $bam_type);
+	    $vc_workflow_version, $vc_workflow_name, $workflow_name, $bam_type, $dcc_specimen_type);
         if (ref($analysis_attributes) eq 'ARRAY') {
             foreach my $attribute (@$analysis_attributes) {
                 $attributes{$attribute->{TAG}} = $attribute->{VALUE};
@@ -230,6 +230,8 @@ sub get {
             $submitter_specimen_id = undef if (ref($submitter_specimen_id) eq 'HASH');
             $bwa_workflow_version = $attributes{workflow_version} || $attributes{alignmant_workflow_version};
             $bwa_workflow_name = $attributes{workflow_name} || $attributes{alignmant_workflow_name};
+
+            $dcc_specimen_type = $attributes{dcc_specimen_type};
 
 	    $vc_workflow_name    = $attributes{variant_workflow_name};
 	    $vc_workflow_version = $attributes{variant_workflow_version};
