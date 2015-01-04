@@ -129,8 +129,6 @@ print "WHITELIST: ".scalar(@whitelist)."\n".$on_whitelist."\n";
 
 		my $donor_information = $sample_information->{$center_name}{$donor_id};
 
-print Dumper $donor_information; die;
-
 		$self->schedule_donor($report_file,
 				      $donor_id,
 				      $donor_information,

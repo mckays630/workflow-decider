@@ -355,7 +355,8 @@ sub get {
 	    submitter_sample_id      => $submitter_sample_id,
 	    submitter_aliquot_id     => $submitter_aliquot_id,
 	    sample_uuid              => $sample_uuid,
-	    bwa_workflow_version     => $bwa_workflow_version
+	    bwa_workflow_version     => $bwa_workflow_version,
+      dcc_specimen_type       => $dcc_specimen_type
 	};
 
         $center_name = 'seqware';
