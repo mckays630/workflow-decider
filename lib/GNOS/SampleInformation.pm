@@ -208,7 +208,15 @@ sub get {
             }
 
         $bam_type = $attributes{workflow_output_bam_contents};
-	#print "BAM TYPE: $bam_type\n";
+        # if the workflow_output_bam_contents is missing look for qc_metrics, the unaligned bams do not have qc_metrics
+        # 2.6.0 workflows should have the workflow_output_bam_contents field but I suspect an early release candidate did not
+        if ($bam_type eq '' || !defined($bam_type)) {
+          if (defined($attributes{qc_metrics}) && $attributes{qc_metrics} ne '') {
+            $bam_type = "aligned";
+          } else {
+            $bam_type = "unaligned";
+          }
+        }
 
             $total_lanes = $attributes{total_lanes};
             $aliquot_uuid = $attributes{aliquot_id};
