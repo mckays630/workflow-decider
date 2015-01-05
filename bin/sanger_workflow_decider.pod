@@ -30,7 +30,7 @@ Variant Walling Workflow Decider - SeqWare
 
 =item --decider-config[=][ ]<decider_path>
 
-The path to the file containing the default settings for the decider. If another option is chosen via command line option the command line setting will take precedence. 
+The path to the file containing the default settings for the decider. If another option is chosen via command line option the command line setting will take precedence.
 
 =over
 
@@ -49,7 +49,15 @@ file in the conf folder.
 
 =for Euclid:
         file.type: readable
-        repeatable 
+        repeatable
+
+=item --local-status-cache[=][ ]<file>
+
+Tab-seperated file describing the previous aliquot-ids that were scheduled, completed, failed, or running. This is not particularly workflow-agnostic but it's used when working with Youxia since VMs can be retired at any time.  By having the decider cache these knowledge about what has been run previously and failed is retained.
+
+=item --failure-reports-dir[=][ ]<failure-report-dir>
+
+This is the directory to which failures reports will be logged.  This is extremely useful if the hosts workflow are running on are ephemeral and disappear often.
 
 =item --workflow-name[=][ ]<workflow_name>
 
@@ -109,7 +117,7 @@ Path to the Amazon EC2 key pair file
 
 =item --lwp-download-timeout[=][ ]<wait_time>
 
-This flag is used to specify the amount of time lwp download should wait for an xml file. If zero is specified it will skip lwp download and attempt other methods. 
+This flag is used to specify the amount of time lwp download should wait for an xml file. If zero is specified it will skip lwp download and attempt other methods.
 
 =for Euclid
    wait_time.type: integer
@@ -119,9 +127,9 @@ This flag is used to specify the amount of time lwp download should wait for an 
 
 =head2 SCHEDULE
 
-=over 
+=over
 
-=item --schedule-ignore-failed 
+=item --schedule-ignore-failed
 
 A flag indicating that previously failed runs for this specimen should be ignored and the specimen scheduled again
 
@@ -132,19 +140,19 @@ This file should be placed in the whitelist folder and should have one sample id
 
 =item --schedule-whitelist-donor[=][ ]<filename>
 
-This flag indicates a file that contains a list of donor ids to be analyzed. 
+This flag indicates a file that contains a list of donor ids to be analyzed.
 This file should be placed in the whitelist folder and should have one donor id per line.
 
 =item --filter-downloads-by-whitelist
 
 This flag applies when a sample or donor whitelist is selected.  If selected this
-option will block download of analysis results for non-whitelised donors or samples.  
+option will block download of analysis results for non-whitelised donors or samples.
 
 
 =item --schedule-blacklist-sample[=][ ]<filename>
 
 This flag indicates samples that should not be run.
-The file should be placed in the blacklist folder and should have on sample id per line. 
+The file should be placed in the blacklist folder and should have on sample id per line.
 
 =item --schedule-blacklist-donor[=][ ]<filename>
 

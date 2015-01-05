@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -e
+
+## Installing all dependencies
+
+sudo apt-get update
+
+# apt-get general packages
+sudo apt-get -q -y --force-yes install liblz-dev zlib1g-dev samtools libboost-filesystem1.54.0 \
+libboost-program-options1.54.0 libboost-regex1.54.0 libboost-system1.54.0 libicu52 libxerces-c3.1 \
+libxqilla6 gdebi libxml-simple-perl
+
+# apt-get perl packages
+sudo apt-get -q -y --force-yes install libcommon-sense-perl libipc-system-simple-perl \
+libgetopt-euclid-perl libfile-slurp-perl libxml-dom-perl libconfig-simple-perl libdata-dump-perl \
+libcapture-tiny-perl libcarp-always-perl libjson-perl libxml-libxml-perl libxml-libxml-simple-perl \
+libdb4.8 libberkeleydb-perl libtemplate-perl
+
+# Install GeneTorrent
+wget --no-clobber https://cghub.ucsc.edu/software/downloads/GeneTorrent/3.8.6/genetorrent-common_3.8.6-ubuntu2.130-14.04_amd64.deb -P /tmp
+wget --no-clobber https://cghub.ucsc.edu/software/downloads/GeneTorrent/3.8.6/genetorrent-download_3.8.6-ubuntu2.130-14.04_amd64.deb -P /tmp
+wget --no-clobber https://cghub.ucsc.edu/software/downloads/GeneTorrent/3.8.6/genetorrent-upload_3.8.6-ubuntu2.130-14.04_amd64.deb -P /tmp
+sudo gdebi --n /tmp/genetorrent-common_3.8.6-ubuntu2.130-14.04_amd64.deb /tmp/genetorrent-download_3.8.6-ubuntu2.130-14.04_amd64.deb /tmp/genetorrent-upload_3.8.6-ubuntu2.130-14.04_amd64.deb
+
+# Install Seqware
+wget https://github.com/SeqWare/seqware/releases/download/1.1.0-alpha.5/seqware -P /tmp
+sudo cp /tmp/seqware /usr/local/bin/
+sudo chmod a+x /usr/local/bin/seqware
+
+# Install Java
+sudo apt-get -y -q --force-yes install openjdk-7-jdk
