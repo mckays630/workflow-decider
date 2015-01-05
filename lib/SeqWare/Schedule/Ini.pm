@@ -62,6 +62,8 @@ print "SETTINGS FILE TEMPLATE IS: $seqware_settings_file\n";
     $settings->param('SW_REST_PASS',$password);
 
     my $donor_id = $donor->{donor_id};
+    say "Making settings dir $output_dir";
+    system("mkdir -p $output_dir");
     say "Making settings file at $output_dir/settings";
     $settings->write("$output_dir/settings");
 
