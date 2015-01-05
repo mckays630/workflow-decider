@@ -93,8 +93,6 @@ sub get {
     foreach my $result_id (keys %{$results}) {
         my $result = $results->{$result_id};
         my $analysis_full_url = $result->{analysis_full_uri};
-        # FIXME: Sheldon, this is the wrong place to get the participant_id, it will often times simply be wrong.  Instead, you need to find it in the detailed info pointed to via the analysisFullURI in the submitter_donor_id field. What are you doing with project code + submitter_donor_id?  Are you using participant_id as the concat of those two?
-	      my $participant_id = $result->{participant_id};
 
         my $analysis_id = $i;
         if ( $analysis_full_url =~ /^(.*)\/([^\/]+)$/ ) {
@@ -104,26 +102,6 @@ sub get {
         else {
             say $parse_log "SKIPPING: no analysis url";
             next;
-        }
-
-	# If requested, only download XML for whitelisted samples/donors
-	# or block download of XML for blacklisted samples/donors
-  # FIXME: Sheldon this is not going to work since the participant_id tends to be junk data because the validation softare on GNOS wasn't configured correctly early on in the project
-	if (@donor_whitelist && $self->filter_by_whitelist()) {
-            next unless grep {$participant_id eq $_} @donor_whitelist;
-	    say STDERR "Donor $participant_id is whitelisted";
-        }
-	if (@donor_blacklist && $self->filter_by_blacklist()) {
-            say STDERR "Donor $participant_id is blacklisted"
-                and next if grep {$participant_id eq $_} @sample_blacklist;
-        }
-        if (@sample_whitelist && $self->filter_by_whitelist()) {
-            next unless grep {$analysis_id eq $_} @sample_whitelist;
-	    say STDERR "Analysis $analysis_id is whitelisted";
-        }
-	if (@sample_blacklist && $self->filter_by_blacklist()) {
-            say STDERR "Analysis $analysis_id is blacklisted"
-		and next if grep {$analysis_id eq $_} @sample_blacklist;
         }
 
         say $parse_log "\n\nANALYSIS\n";
@@ -168,13 +146,7 @@ sub get {
         # Sheldon, this value from the top of the doc is is probably OK... seems like GNOS parses this correclty
         my $aliquot_id = $analysis_result{aliquot_id};
 
-        # FIXME: Sheldon, sadly this is not reliable :-( Instead, look for "<TAG>submitter_donor_id</TAG>" in the ANALYSIS_ATTRIBUTES section instead
-        my $participant_id = $analysis_result{participant_id};
-        if (ref($participant_id) eq 'HASH') {
-            $participant_id = undef;
-        }
-
-  # FIXME: Sheldon, I don't think this is actually defined here... only in ANALYSIS_ATTRIBUTES in the example I'm looking at...
+	# FIXME: Sheldon, I don't think this is actually defined here... only in ANALYSIS_ATTRIBUTES in the example I'm looking at...
 	my $use_control = $analysis_result{use_cntl};
 
 
@@ -198,7 +170,7 @@ sub get {
             }
         }
 
-        my (%attributes, $total_lanes, $aliquot_uuid, $submitter_participant_id, $submitter_donor_id, $workflow_version,
+        my (%attributes, $total_lanes, $aliquot_uuid, $submitter_donor_id, $workflow_version,
             $submitter_sample_id, $bwa_workflow_version, $submitter_specimen_id, $bwa_workflow_name, $dcc_project_code,
 	    $vc_workflow_version, $vc_workflow_name, $workflow_name, $bam_type, $dcc_specimen_type);
         if (ref($analysis_attributes) eq 'ARRAY') {
@@ -207,26 +179,23 @@ sub get {
 
             }
 
-        $bam_type = $attributes{workflow_output_bam_contents};
-        # if the workflow_output_bam_contents is missing look for qc_metrics, the unaligned bams do not have qc_metrics
-        # 2.6.0 workflows should have the workflow_output_bam_contents field but I suspect an early release candidate did not
-        if ($bam_type eq '' || !defined($bam_type)) {
-          if (defined($attributes{qc_metrics}) && $attributes{qc_metrics} ne '') {
-            $bam_type = "aligned";
-          } else {
-            $bam_type = "unaligned";
-          }
-        }
+	    $bam_type = $attributes{workflow_output_bam_contents};
+	    # if the workflow_output_bam_contents is missing look for qc_metrics, the unaligned bams do not have qc_metrics
+	    # 2.6.0 workflows should have the workflow_output_bam_contents field but I suspect an early release candidate did not
+	    if ($bam_type eq '' || !defined($bam_type)) {
+		if (defined($attributes{qc_metrics}) && $attributes{qc_metrics} ne '') {
+		    $bam_type = "aligned";
+		} else {
+		    $bam_type = "unaligned";
+		}
+	    }
+
 
             $total_lanes = $attributes{total_lanes};
             $aliquot_uuid = $attributes{aliquot_id};
 
             $dcc_project_code = $attributes{dcc_project_code};
             $dcc_project_code = undef if (ref($dcc_project_code) eq 'HASH');
-
-            # FIXME: submitter_participant_id not in XML!?
-            $submitter_participant_id = $attributes{submitter_participant_id};
-            $submitter_participant_id = undef if (ref($submitter_participant_id) eq 'HASH');
 
             $submitter_donor_id = $attributes{submitter_donor_id};
             $submitter_donor_id = undef if (ref($submitter_donor_id) eq 'HASH');
@@ -236,45 +205,32 @@ sub get {
 
             $submitter_specimen_id = $attributes{submitter_specimen_id};
             $submitter_specimen_id = undef if (ref($submitter_specimen_id) eq 'HASH');
-            $bwa_workflow_version = $attributes{workflow_version} || $attributes{alignmant_workflow_version};
-            $bwa_workflow_name = $attributes{workflow_name} || $attributes{alignmant_workflow_name};
+
+            $bwa_workflow_version = $attributes{workflow_version} || $attributes{alignment_workflow_version};
+            $bwa_workflow_name    = $attributes{workflow_name}    || $attributes{alignment_workflow_name};
 
             $dcc_specimen_type = $attributes{dcc_specimen_type};
 
 	    $vc_workflow_name    = $attributes{variant_workflow_name};
 	    $vc_workflow_version = $attributes{variant_workflow_version};
 
-	    # XML inconsistent across sites?
-	    $use_control ||= $attributes{use_cntl};
         }
 
 	$workflow_name = $vc_workflow_name || $bwa_workflow_name;
 	$workflow_version = $vc_workflow_version || $bwa_workflow_version;
 
-
-        # SHELDON: here I'm going to override some values using the ANALYSIS_ATTRIBUTES which I know are good.  You'll want to clean these up so they aren't defined with incorrect data first and just skip to this section which pulls the correct data back from ANALYSIS_ATTRIBUTES
-        # FIXME: correct?  What if it's null?
-        # my $donor_id =  $participant_id || $submitter_donor_id;
-        my $donor_id =  $submitter_donor_id;
-        # FIXME: does this need to include project code too?
-        $participant_id = $submitter_donor_id;
-        # override with attribute
         $sample_id = $submitter_sample_id;
-        # maybe not even used?
-        $submitter_participant_id = $donor_id;
-
 
 	# make sure the donor ID is unique for white/blacklist purposes;
-	my $donor_id = join('-',$dcc_project_code,$donor_id);
+	my $donor_id =  join('-',$dcc_project_code,$submitter_donor_id);
 
         say $parse_log "\tPROJECT CODE:\t$dcc_project_code";
         say $parse_log "\tDONOR UNIQUE ID:\t$donor_id";
         say $parse_log "\tANALYSIS:\t$analysis_data_uri";
         say $parse_log "\tANALYSIS ID:\t$analysis_id";
-        say $parse_log "\tPARTICIPANT ID:\t$participant_id";
+        say $parse_log "\tPARTICIPANT ID:\t$submitter_donor_id";
         say $parse_log "\tSAMPLE ID:\t$sample_id";
         say $parse_log "\tALIQUOT ID:\t$aliquot_id";
-        say $parse_log "\tSUBMITTER PARTICIPANT ID:\t$submitter_participant_id";
         say $parse_log "\tSUBMITTER DONOR ID:\t$submitter_donor_id";
         say $parse_log "\tSUBMITTER SAMPLE ID:\t$submitter_sample_id";
         say $parse_log "\tSUBMITTER ALIQUOT ID:\t$submitter_aliquot_id";
@@ -341,9 +297,6 @@ sub get {
         if ((defined $submitter_donor_id) and (defined $submitter_donor_id ne '')) {
             $submitter_sample_id = $submitter_specimen_id;
         }
-        $submitter_participant_id = (defined $submitter_donor_id) ? $submitter_donor_id : $submitter_participant_id;
-        #$aliquot_id = (defined $submitter_sample_id) ? $submitter_sample_id : $aliquot_id;
-        #$submitter_aliquot_id = (defined $submitter_sample_id)? $submitter_sample_id: $submitter_aliquot_id;
 
         $sample_id = (defined $submitter_specimen_id) ? $submitter_specimen_id: $sample_id;
         $center_name //= 'unknown';
@@ -355,16 +308,14 @@ sub get {
 	    library_strategy         => $library_strategy,
 	    library_source           => $library_source,
 	    alignment_genome         => $alignment,
-	    use_control              => $use_control,
             bam_type                 => $bam_type,
 	    total_lanes              => $total_lanes,
-	    submitter_participant_id => $submitter_participant_id,
 	    sample_id                => $sample_id,
 	    submitter_sample_id      => $submitter_sample_id,
 	    submitter_aliquot_id     => $submitter_aliquot_id,
 	    sample_uuid              => $sample_uuid,
 	    bwa_workflow_version     => $bwa_workflow_version,
-      dcc_specimen_type       => $dcc_specimen_type
+	    dcc_specimen_type        => $dcc_specimen_type
 	};
 
         $center_name = 'seqware';

@@ -24,8 +24,6 @@ sub schedule_samples {
     my $self = shift;
     my %args = @_;
 
-    print "IN SCHEDULE SAMPLES\n";
-
     # Still clunky but a least args won't get mixed up if they
     # are in the wrong order
     my $report_file             = $args{'report_file'};
@@ -67,37 +65,31 @@ sub schedule_samples {
 	#say STDERR "DEBUG: detected different upload URL";
 	$self->{gnos_upload_url} = $gnos_upload_url;
     }
-
+    
     say $report_file "SAMPLE SCHEDULING INFORMATION\n";
-
-       print "HERE1\n";
+    
     my $i = 0;
     foreach my $center_name (keys %{$sample_information}) {
-       print "HERE2\n";
         next if (defined $specific_center && $specific_center ne $center_name);
         say $report_file "SCHEDULING: $center_name";
-
+	
 	my @blacklist = grep {s/\s+/-/} @{$blacklist->{donor}} if $blacklist and $blacklist->{donor};
 	my @whitelist = grep {s/\s+/-/} @{$whitelist->{donor}} if $whitelist and $whitelist->{donor};
-
-print Dumper \@whitelist;
-
-        DONOR: foreach my $donor_id (keys %{$sample_information->{$center_name}}) {
-
-       print "HERE3\n";
-
-	    # Only do specified donor if applicable
-            next if defined $specific_donor and $specific_donor ne $donor_id;
-
-	    # Skip any blacklisted donors
-            next if @blacklist > 0 and grep {/^$donor_id$/} @blacklist;
-
-	    # Skip any donors who already have the applicable major version of a
-            # variant-calling workflow run
-	    my $variant_workflow = $sample_information->{$center_name}->{$donor_id}->{variant_workflow};
-	    delete $sample_information->{$center_name}->{$donor_id}->{variant_workflow}; # or else mess up specimen count
-	    if ($variant_workflow && ref $variant_workflow eq 'HASH') {
-		if (my $variant_workflow_version = $variant_workflow->{$workflow_name} ) {
+	
+      DONOR: foreach my $donor_id (keys %{$sample_information->{$center_name}}) {
+	  
+	  # Only do specified donor if applicable
+	  next if defined $specific_donor and $specific_donor ne $donor_id;
+	  
+	  # Skip any blacklisted donors
+	  next if @blacklist > 0 and grep {/^$donor_id$/} @blacklist;
+	  
+	  # Skip any donors who already have the applicable major version of a
+	  # variant-calling workflow run
+	  my $variant_workflow = $sample_information->{$center_name}->{$donor_id}->{variant_workflow};
+	  delete $sample_information->{$center_name}->{$donor_id}->{variant_workflow}; # or else mess up specimen count
+	  if ($variant_workflow && ref $variant_workflow eq 'HASH') {
+	      if (my $variant_workflow_version = $variant_workflow->{$workflow_name} ) {
 		    my @have_version = split '.', $variant_workflow_version;
 		    my @need_version = split '.', $workflow_version;
 		    my $skip_donor = $have_version[0] == $need_version[0] && $have_version[1] == $need_version[1];
@@ -108,60 +100,60 @@ print Dumper \@whitelist;
 
 		}
 	    }
+	  
+          # put in the running+failed+completed
+	  my $unavail_samples = {};
+	  foreach my $key (keys %{$running_samples}) {
+	      $unavail_samples->{$key} = 1;
+	  }
+	  foreach my $key (keys %{$failed_samples}) {
+	      $unavail_samples->{$key} = 1;
+	  }
+	  foreach my $key (keys %{$completed_samples}) {
+	      $unavail_samples->{$key} = 1;
+	  }
+	  
+	  # Skip non-whitelisted donors if applicable
+	  my $on_whitelist = grep {/^$donor_id/} @whitelist;
 
-# put in the running+failed+completed
-my $unavail_samples = {};
-foreach my $key (keys %{$running_samples}) {
-  $unavail_samples->{$key} = 1;
-}
-foreach my $key (keys %{$failed_samples}) {
-  $unavail_samples->{$key} = 1;
-}
-foreach my $key (keys %{$completed_samples}) {
-  $unavail_samples->{$key} = 1;
-}
-
-	    # Skip non-whitelisted donors if applicable
-	    my $on_whitelist = grep {/^$donor_id/} @whitelist;
-print "WHITELIST: ".scalar(@whitelist)."\n".$on_whitelist."\n";
-            if (scalar(@whitelist) == 0 or $on_whitelist) {
-		say STDERR "Donor $donor_id is on the whitelist" if $on_whitelist;
-
-		my $donor_information = $sample_information->{$center_name}{$donor_id};
-
-		$self->schedule_donor($report_file,
-				      $donor_id,
-				      $donor_information,
-				      $cluster_information,
-				      $unavail_samples,
-				      $skip_scheduling,
-				      $specific_sample,
-				      $ignore_lane_count,
-				      $seqware_settings_file,
-				      $output_dir,
-				      $output_prefix,
-				      $force_run,
-				      $threads,
-				      $skip_gtdownload,
-				      $skip_gtupload,
-				      $upload_results,
-				      $input_prefix,
-				      $gnos_url,
-				      $ignore_failed,
-				      $working_dir,
-				      $center_name,
-				      $workflow_version,
-				      $bwa_workflow_version,
-				      $whitelist,
-				      $blacklist,
-				      $tabix_url,
-				      $pem_file
-		    );
-	    }
-	    elsif (@whitelist > 0) {
-		say STDERR "Donor $donor_id is not on the whitelist";
-	    }
-	}
+	  if (scalar(@whitelist) == 0 or $on_whitelist) {
+	      say STDERR "Donor $donor_id is on the whitelist" if $on_whitelist;
+	      
+	      my $donor_information = $sample_information->{$center_name}{$donor_id};
+	      
+	      $self->schedule_donor($report_file,
+				    $donor_id,
+				    $donor_information,
+				    $cluster_information,
+				    $unavail_samples,
+				    $skip_scheduling,
+				    $specific_sample,
+				    $ignore_lane_count,
+				    $seqware_settings_file,
+				    $output_dir,
+				    $output_prefix,
+				    $force_run,
+				    $threads,
+				    $skip_gtdownload,
+				    $skip_gtupload,
+				    $upload_results,
+				    $input_prefix,
+				    $gnos_url,
+				    $ignore_failed,
+				    $working_dir,
+				    $center_name,
+				    $workflow_version,
+				    $bwa_workflow_version,
+				    $whitelist,
+				    $blacklist,
+				    $tabix_url,
+				    $pem_file
+		  );
+	  }
+	  elsif (@whitelist > 0) {
+	      say STDERR "Donor $donor_id is not on the whitelist";
+	  }
+      }
     }
 }
 
@@ -192,15 +184,11 @@ sub schedule_workflow {
     my $cluster = (keys %{$cluster_information})[0];
     my $cluster_found = (defined($cluster) and $cluster ne '' )? 1: 0;
 
-    print Dumper $cluster_information;
-    print "CLUSTER: $cluster\n";
-    print Dumper $cluster_information->{$cluster};
-
     my $url = $cluster_information->{$cluster}{webservice};
     my $username = $cluster_information->{$cluster}{username};
     my $password = $cluster_information->{$cluster}{password};
 
-    print "URL $url USERNAME $username PASS $password\n";
+    say "URL $url USERNAME $username PASS $password";
 
     my $workflow_accession = $cluster_information->{$cluster}{workflow_accession};
     $workflow_version = $cluster_information->{$cluster}{workflow_version} if $cluster_information->{$cluster}{workflow_version};
@@ -210,7 +198,6 @@ sub schedule_workflow {
 
     if ($cluster_found or $skip_scheduling) {
         system("mkdir -p $Bin/../$working_dir/ini");
-print "HERE SCHEDULE 1234\n";
         $self->create_workflow_settings(
 	    $donor,
 	    $seqware_settings_file,
@@ -220,7 +207,7 @@ print "HERE SCHEDULE 1234\n";
 	    $working_dir,
 	    $center_name
 	    );
-
+	
         $self->create_workflow_ini(
 	    $donor,
 	    $workflow_version,
@@ -272,16 +259,16 @@ sub submit_workflow {
     my $settings = "$working_dir/settings";
     my $launch_command = "SEQWARE_SETTINGS=$settings /usr/local/bin/seqware workflow schedule --accession $accession --host $host --ini $ini";
 
-     print "LAUNCH: $launch_command\n";
+    say "LAUNCH: $launch_command";
 
     if ($skip_scheduling) {
-        print "\tNOT LAUNCHING WORKFLOW BECAUSE --schedule-skip-workflow SPECIFIED: $ini\n";
+        say "\tNOT LAUNCHING WORKFLOW BECAUSE --schedule-skip-workflow SPECIFIED: $ini";
         say $report_file "\tNOT LAUNCHING WORKFLOW BECAUSE --schedule-skip-workflow SPECIFIED: $ini";
         say $report_file "\t\tLAUNCH CMD WOULD HAVE BEEN: $launch_command\n";
         return;
     }
     elsif ($cluster_found) {
-        print "\tLAUNCHING WORKFLOW: $ini\n";
+        say "\tLAUNCHING WORKFLOW: $ini";
         say $report_file "\tLAUNCHING WORKFLOW: $ini";
         say $report_file "\t\tCLUSTER HOST: $host ACCESSION: $accession URL: $url";
         say $report_file "\t\tLAUNCH CMD: $launch_command";
@@ -303,7 +290,8 @@ sub submit_workflow {
         print $out_fh $std_out if($std_out);
         print $err_fh $std_err if($std_err);
 
-        say $report_file "\t\tSOMETHING WENT WRONG WITH SCHEDULING THE WORKFLOW: Check error log =>  $Bin/../$submission_path/$donor_id.e and output log => $Bin/../$submission_path/$donor_id.o" if($std_err);
+        say $report_file "\t\tSOMETHING WENT WRONG WITH SCHEDULING THE WORKFLOW: Check error log =>  ",
+	"$Bin/../$submission_path/$donor_id.e and output log => $Bin/../$submission_path/$donor_id.o" if $std_err;
     }
     else {
         print "\tNOT LAUNCHING WORKFLOW, NO CLUSTER AVAILABLE: $ini\n";
@@ -344,7 +332,7 @@ sub schedule_donor {
 	 $pem_file
 	) = @_;
 
-print "GOING TO SCHEDULE\n";
+    say "GOING TO SCHEDULE";
     say $report_file "DONOR/PARTICIPANT: $donor_id\n";
 
     my @sample_ids = keys %{$donor_information};
@@ -373,9 +361,6 @@ print "GOING TO SCHEDULE\n";
 
 	    my $alignments = $donor_information->{$donor_id};
 
-#print "PRINT THE ALIGNMENT HASH\n";
-#print Dumper($alignments);
-
 	    push @{$donor->{gnos_url}}, $gnos_url;
 
 	    my %said;
@@ -383,25 +368,19 @@ print "GOING TO SCHEDULE\n";
 	    foreach my $alignment_id (keys %{$alignments}) {
 
                 # Skip unaligned BAMs, not relevant to VC workflows
-print "ALIGNMENT ID: $alignment_id\n";
-                # FIXME: sheldon, this is not the right place to check the alignment type, it's a field in the key/values called workflow_output_bam_contents in the XML
-		next if $alignment_id eq 'unaligned';
-
 		my $aliquots = $alignments->{$alignment_id};
 		foreach my $aliquot_id (keys %{$aliquots}) {
 		    $donor->{aliquot_ids}->{$alignment_id} = $aliquot_id;
-
+		    
 		    my $libraries = $aliquots->{$aliquot_id};
 		    foreach my $library_id (keys %{$libraries}) {
 			my $library = $libraries->{$library_id};
 
-      # DEBUG
-      print Dumper($library);
-
+			
 			my $current_bwa_workflow_version = $library->{bwa_workflow_version};
 			my @current_bwa_workflow_version = keys %$current_bwa_workflow_version;
 			$current_bwa_workflow_version = $current_bwa_workflow_version[0];
-
+			
 			my @current_bwa_workflow_version = split /\./, $current_bwa_workflow_version;
 			my @run_bwa_workflow_versions = split /\./, $bwa_workflow_version;
 
@@ -428,36 +407,21 @@ print "ALIGNMENT ID: $alignment_id\n";
 
 			$aliquot{$alignment_id} = $aliquot_id;
 
-      # FIXME: this is an unsafe method
-			# Is it tumor or normal?
-			my ($use_control) = keys %{$library->{use_control}};
-
-      #if ($use_control and $use_control eq 'N/A' ) {
-      #  $normal{$alignment_id}++;
-      #}
-      #elsif ($use_control) {
-      #  $tumor{$alignment_id}++;
-      #}
-      #else {
-      #  say STDERR "This is an unknown tissue type!";
-      #}
-
-
-      my ($dcc_specimen_type) = keys %{$library->{dcc_specimen_type}};
-      # safer way to tell
-      # see https://wiki.oicr.on.ca/display/PANCANCER/PCAWG+%28a.k.a.+PCAP+or+PAWG%29+Sequence+Submission+SOP+-+v1.0
-      # the Appendix has a list of all possible terms.
-      # FIXME: we aren't dealing with Xenograft and Cell Line
-      if ($dcc_specimen_type =~ /normal/i) {
-        $normal{$alignment_id}++;
-      }
-      elsif ($dcc_specimen_type =~ /tumor/i || $dcc_specimen_type =~ /tumour/i) {
-        $tumor{$alignment_id}++;
-      }
-      else {
-        say STDERR "This is an unknown tissue type!";
-      }
-
+			my ($dcc_specimen_type) = keys %{$library->{dcc_specimen_type}};
+			# safer way to tell
+			# see https://wiki.oicr.on.ca/display/PANCANCER/PCAWG+%28a.k.a.+PCAP+or+PAWG%29+Sequence+Submission+SOP+-+v1.0
+			# the Appendix has a list of all possible terms.
+			# FIXME: we aren't dealing with Xenograft and Cell Line
+			if ($dcc_specimen_type =~ /normal/i) {
+			    $normal{$alignment_id}++;
+			}
+			elsif ($dcc_specimen_type =~ /tumor/i || $dcc_specimen_type =~ /tumour/i) {
+			    $tumor{$alignment_id}++;
+			}
+			else {
+			    say STDERR "This is an unknown tissue type!";
+			}
+			
 			# We can't use this!
 			next unless keys %tumor or keys %normal;
 
@@ -598,9 +562,7 @@ print "ALIGNMENT ID: $alignment_id\n";
     $donor->{normal} = \%normal;
     $donor->{tumor}  = \%tumor;
 
-print " ABOUT TO SCHEDULE\n";
-#print Dumper $donor;
-#print Dumper $running_samples;
+    say "\nABOUT TO SCHEDULE";
 
     $self->schedule_workflow( $donor,
 			      $seqware_settings_file,
